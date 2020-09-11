@@ -1,9 +1,9 @@
 /************************************************************************/
-/* pngClose.c - CLOSE A PNG IMAGE FILE                  */
-/*                                  */
-/* Ver. 2.0.1 (2016-09-08)                      */
-/* (c) 2016 Jeffrey J. Rodriguez. All rights reserved.          */
-/* jjrodrig@email.arizona.edu                       */
+/* pngClose.c - CLOSE A PNG IMAGE FILE					*/
+/*									*/
+/* Ver. 2.0.1 (2016-09-08)						*/
+/* (c) 2016 Jeffrey J. Rodriguez. All rights reserved.			*/
+/* jjrodrig@email.arizona.edu						*/
 
 #include "pngio.h"
 
