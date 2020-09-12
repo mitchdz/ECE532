@@ -22,6 +22,9 @@ exit:
     return 0;
 }
 
+
+
+
 // Rodriguez Edge Detector
 // modified 3x3 gradient operator that computes an edge map
 // E(r,c) from a grayscale input image I(r,c) as follows:
@@ -33,6 +36,10 @@ void RodriguezEdgeDetector()
     pngReadHdr(pngfile, &nrows, &ncols);
 
     printf("%d rows, %d cols", nrows, ncols);
+
+
+
+
 
 }
 
