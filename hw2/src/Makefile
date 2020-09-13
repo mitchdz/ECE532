@@ -64,3 +64,6 @@ libdip.a:	$(LIBOBJECTS)
 
 clean:
 		@ rm -f $(LIBOBJECTS) libdip.a $(EXECUTABLES)
+
+run: all
+	./hw2
