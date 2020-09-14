@@ -72,7 +72,7 @@ double JJRMedian(PNGFILE *pngfile, int32_t r, int32_t c,
 {
     double medianVal = 0;
     int32_t lmedian, rmedian;
-    int32_t lvalues[5] = {0}, rvalues[5] = {0};
+    uint8_t lvalues[5] = {0}, rvalues[5] = {0};
     switch(dir){
         case X:
             goto XMedian;
@@ -82,40 +82,40 @@ double JJRMedian(PNGFILE *pngfile, int32_t r, int32_t c,
             break;
     }
 YMedian:
-    lvalues[0] = (int32_t)(png_raw[r] + c-1);
-    lvalues[1] = (int32_t)(png_raw[r] + c+1);
-    lvalues[2] = (int32_t)(png_raw[r-1] + c-1);
-    lvalues[3] = (int32_t)(png_raw[r-1] + c);
-    lvalues[4] = (int32_t)(png_raw[r-1] + c+1);
+    lvalues[0] = (uint8_t)(png_raw[r] + c-1);
+    lvalues[1] = (uint8_t)(png_raw[r] + c+1);
+    lvalues[2] = (uint8_t)(png_raw[r-1] + c-1);
+    lvalues[3] = (uint8_t)(png_raw[r-1] + c);
+    lvalues[4] = (uint8_t)(png_raw[r-1] + c+1);
 
-    rvalues[0] = (int32_t)(png_raw[r] + c-1);
-    rvalues[1] = (int32_t)(png_raw[r] + c+1);
-    rvalues[2] = (int32_t)(png_raw[r+1] + c-1);
-    rvalues[3] = (int32_t)(png_raw[r+1] + c);
-    rvalues[4] = (int32_t)(png_raw[r+1] + c+1);
+    rvalues[0] = (uint8_t)(png_raw[r] + c-1);
+    rvalues[1] = (uint8_t)(png_raw[r] + c+1);
+    rvalues[2] = (uint8_t)(png_raw[r+1] + c-1);
+    rvalues[3] = (uint8_t)(png_raw[r+1] + c);
+    rvalues[4] = (uint8_t)(png_raw[r+1] + c+1);
 
-    qsort(lvalues, 5, sizeof(int32_t), cmpfunc);
-    qsort(rvalues, 5, sizeof(int32_t), cmpfunc);
+    qsort(lvalues, 5, sizeof(uint8_t), cmpfunc);
+    qsort(rvalues, 5, sizeof(uint8_t), cmpfunc);
 
     lmedian = lvalues[2];
     rmedian = rvalues[2];
     medianVal = lmedian - rmedian;
     goto cleanup;
 XMedian:
-    lvalues[0] = (int32_t)(png_raw[r-1] + c);
-    lvalues[1] = (int32_t)(png_raw[r-1] + c+1);
-    lvalues[2] = (int32_t)(png_raw[r] + c+1);
-    lvalues[3] = (int32_t)(png_raw[r+1] + c);
-    lvalues[4] = (int32_t)(png_raw[r+1] + c+1);
+    lvalues[0] = (uint8_t)(png_raw[r-1] + c);
+    lvalues[1] = (uint8_t)(png_raw[r-1] + c+1);
+    lvalues[2] = (uint8_t)(png_raw[r] + c+1);
+    lvalues[3] = (uint8_t)(png_raw[r+1] + c);
+    lvalues[4] = (uint8_t)(png_raw[r+1] + c+1);
 
-    rvalues[0] = (int32_t)(png_raw[r-1] + c-1);
-    rvalues[1] = (int32_t)(png_raw[r-1] + c);
-    rvalues[2] = (int32_t)(png_raw[r] + c-1);
-    rvalues[3] = (int32_t)(png_raw[r+1] + c-1);
-    rvalues[4] = (int32_t)(png_raw[r+1] + c);
+    rvalues[0] = (uint8_t)(png_raw[r-1] + c-1);
+    rvalues[1] = (uint8_t)(png_raw[r-1] + c);
+    rvalues[2] = (uint8_t)(png_raw[r] + c-1);
+    rvalues[3] = (uint8_t)(png_raw[r+1] + c-1);
+    rvalues[4] = (uint8_t)(png_raw[r+1] + c);
 
-    qsort(lvalues, 5, sizeof(int32_t), cmpfunc);
-    qsort(rvalues, 5, sizeof(int32_t), cmpfunc);
+    qsort(lvalues, 5, sizeof(uint8_t), cmpfunc);
+    qsort(rvalues, 5, sizeof(uint8_t), cmpfunc);
 
     lmedian = lvalues[2];
     rmedian = rvalues[2];
