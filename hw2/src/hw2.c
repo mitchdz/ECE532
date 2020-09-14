@@ -114,41 +114,6 @@ XMedian:
     rvalues[3] = (int32_t)(png_raw[r+1] + c-1);
     rvalues[4] = (int32_t)(png_raw[r+1] + c);
 
-
-/*
-YMedian:
-    lvalues[0] = (int32_t)(*png_raw + pixel_address(r,c-1));
-    lvalues[1] = (int32_t)(*png_raw + pixel_address(r,c+1));
-    lvalues[2] = (int32_t)(*png_raw + pixel_address(r-1,c-1));
-    lvalues[3] = (int32_t)(*png_raw + pixel_address(r-1,c));
-    lvalues[4] = (int32_t)(*png_raw + pixel_address(r-1,c+1));
-
-    rvalues[0] = (int32_t)(*png_raw + pixel_address(r,c-1));
-    rvalues[1] = (int32_t)(*png_raw + pixel_address(r,c+1));
-    rvalues[2] = (int32_t)(*png_raw + pixel_address(r+1,c-1));
-    rvalues[3] = (int32_t)(*png_raw + pixel_address(r+1,c));
-    rvalues[4] = (int32_t)(*png_raw + pixel_address(r+1,c+1));
-
-    qsort(lvalues, 5, sizeof(int32_t), cmpfunc);
-    qsort(rvalues, 5, sizeof(int32_t), cmpfunc);
-
-    lmedian = lvalues[2];
-    rmedian = rvalues[2];
-    medianVal = lmedian - rmedian;
-    goto cleanup;
-XMedian:
-    lvalues[0] = (int32_t)(png_raw + pixel_address(r-1,c));
-    lvalues[1] = (int32_t)(png_raw + pixel_address(r-1,c+1));
-    lvalues[2] = (int32_t)(png_raw + pixel_address(r,c+1));
-    lvalues[3] = (int32_t)(png_raw + pixel_address(r+1,c));
-    lvalues[4] = (int32_t)(png_raw + pixel_address(r+1,c+1));
-
-    rvalues[0] = (int32_t)(png_raw + pixel_address(r-1,c-1));
-    rvalues[1] = (int32_t)(png_raw + pixel_address(r-1,c));
-    rvalues[2] = (int32_t)(png_raw + pixel_address(r,c-1));
-    rvalues[3] = (int32_t)(png_raw + pixel_address(r+1,c-1));
-    rvalues[4] = (int32_t)(png_raw + pixel_address(r+1,c));
-*/
     qsort(lvalues, 5, sizeof(int32_t), cmpfunc);
     qsort(rvalues, 5, sizeof(int32_t), cmpfunc);
 
