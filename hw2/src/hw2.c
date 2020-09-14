@@ -9,6 +9,8 @@
 #include "pngReadRow.c"
 
 void **png_raw;
+int32_t N_COLS = 0;
+int32_t N_ROWS = 0;
 
 int main(int argc,char* argv[])
 {
@@ -25,20 +27,22 @@ exit:
 
 void analyzeImage()
 {
-    int32_t nrows, ncols, JJRGM, SGM, c, r;
+    int32_t c, r;
+    double JJRGM, SGM;
     PNGFILE *pngfile = pngOpen(INPUT_PICTURE, "r");
-    pngReadHdr(pngfile, &nrows, &ncols);
-    printf("image is %d rows by %d cols\n", nrows, ncols);
+    pngReadHdr(pngfile, &N_ROWS, &N_COLS);
+    printf("image is %d rows by %d cols\n", N_ROWS, N_COLS);
 
     //store entire image into memory
-    png_raw = matalloc(nrows, ncols, 0, 0, 1);
-    for (r = 0; r < nrows-1; r++) {
-        pngReadRow(pngfile, png_raw[r]);
+    png_raw = matalloc(N_ROWS, N_COLS, 0, 0, 1);
+    for (r = 0; r < N_ROWS-1; r++) {
+        pngReadRow(pngfile, *png_raw + r*N_COLS);
     }
 
     for (r = R1_R_START; r <= R1_R_END; r++) {
         for (c = R1_C_START; c <= R1_C_END; c++) {
             JJRGM = JJRGradiantMagnitude(pngfile, r, c);
+            printf("r%d c%d: %lf\n",r, c, JJRGM);
             R1_JJR_magnitude[r-R1_R_START][c-R1_C_START] = JJRGM;
 
             SGM = SobelGradientMagnitude(pngfile, r, c);
@@ -58,8 +62,15 @@ cleanup:
     pngClose(pngfile);
 }
 
-int32_t cmpfunc (const void *a, const void * b) {
+int32_t cmpfunc (const void *a, const void * b) 
+{
     return ( *(int*)a - *(int*)b );
+}
+
+int32_t pixel_address(int32_t row, int32_t col)
+{
+    //row * cols + col + 1
+    return ((row * N_COLS ) + col + 1);
 }
 
 double JJRMedian(PNGFILE *pngfile, int32_t r, int32_t c,
@@ -77,17 +88,17 @@ double JJRMedian(PNGFILE *pngfile, int32_t r, int32_t c,
             break;
     }
 YMedian:
-    lvalues[0] = (int32_t)png_raw[(r)   + (2*(c-1 - 1))];
-    lvalues[1] = (int32_t)png_raw[(r)   + (2*(c+1 - 1))];
-    lvalues[2] = (int32_t)png_raw[(r-1) + (2*(c-1 - 1))];
-    lvalues[3] = (int32_t)png_raw[(r-1) + (2*(c   - 1))];
-    lvalues[4] = (int32_t)png_raw[(r-1) + (2*(c+1 - 1))];
+    lvalues[0] = (int32_t)(*png_raw + pixel_address(r,c-1));
+    lvalues[1] = (int32_t)(*png_raw + pixel_address(r,c+1));
+    lvalues[2] = (int32_t)(*png_raw + pixel_address(r-1,c-1));
+    lvalues[3] = (int32_t)(*png_raw + pixel_address(r-1,c));
+    lvalues[4] = (int32_t)(*png_raw + pixel_address(r-1,c+1));
 
-    rvalues[0] = (int32_t)png_raw[(r)   + (2*(c-1 - 1))];
-    rvalues[1] = (int32_t)png_raw[(r-1) + (2*(c+1 - 1))];
-    rvalues[2] = (int32_t)png_raw[(r+1) + (2*(c-1 - 1))];
-    rvalues[3] = (int32_t)png_raw[(r+1) + (2*(c   - 1))];
-    rvalues[4] = (int32_t)png_raw[(r+1) + (2*(c+1 - 1))];
+    rvalues[0] = (int32_t)(*png_raw + pixel_address(r,c-1));
+    rvalues[1] = (int32_t)(*png_raw + pixel_address(r,c+1));
+    rvalues[2] = (int32_t)(*png_raw + pixel_address(r+1,c-1));
+    rvalues[3] = (int32_t)(*png_raw + pixel_address(r+1,c));
+    rvalues[4] = (int32_t)(*png_raw + pixel_address(r+1,c+1));
 
     qsort(lvalues, 5, sizeof(int32_t), cmpfunc);
     qsort(rvalues, 5, sizeof(int32_t), cmpfunc);
@@ -97,17 +108,17 @@ YMedian:
     medianVal = lmedian - rmedian;
     goto cleanup;
 XMedian:
-    lvalues[0] = (int32_t)png_raw[(r-1) + (2*(c   - 1))];
-    lvalues[1] = (int32_t)png_raw[(r-1) + (2*(c+1 - 1))];
-    lvalues[2] = (int32_t)png_raw[(r)   + (2*(c+1 - 1))];
-    lvalues[3] = (int32_t)png_raw[(r+1) + (2*(c   - 1))];
-    lvalues[4] = (int32_t)png_raw[(r+1) + (2*(c+1 - 1))];
+    lvalues[0] = (int32_t)(png_raw + pixel_address(r-1,c));
+    lvalues[1] = (int32_t)(png_raw + pixel_address(r-1,c+1));
+    lvalues[2] = (int32_t)(png_raw + pixel_address(r,c+1));
+    lvalues[3] = (int32_t)(png_raw + pixel_address(r+1,c));
+    lvalues[4] = (int32_t)(png_raw + pixel_address(r+1,c+1));
 
-    rvalues[0] = (int32_t)png_raw[(r-1) + (2*(c-1 - 1))];
-    rvalues[1] = (int32_t)png_raw[(r-1) + (2*(c   - 1))];
-    rvalues[2] = (int32_t)png_raw[(r)   + (2*(c-1 - 1))];
-    rvalues[3] = (int32_t)png_raw[(r+1) + (2*(c-1 - 1))];
-    rvalues[4] = (int32_t)png_raw[(r+1) + (2*(c   - 1))];
+    rvalues[0] = (int32_t)(png_raw + pixel_address(r-1,c-1));
+    rvalues[1] = (int32_t)(png_raw + pixel_address(r-1,c));
+    rvalues[2] = (int32_t)(png_raw + pixel_address(r,c-1));
+    rvalues[3] = (int32_t)(png_raw + pixel_address(r+1,c-1));
+    rvalues[4] = (int32_t)(png_raw + pixel_address(r+1,c));
 
     qsort(lvalues, 5, sizeof(int32_t), cmpfunc);
     qsort(rvalues, 5, sizeof(int32_t), cmpfunc);
