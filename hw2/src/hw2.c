@@ -29,71 +29,102 @@ exit:
 void analyzeImage()
 {
     int32_t c, r;
-    double JJRGM, SGM;
+
     PNGFILE *pngfile = pngOpen(INPUT_PICTURE, "r");
     pngReadHdr(pngfile, &N_ROWS, &N_COLS);
     printf("image is %d rows by %d cols\n", N_ROWS, N_COLS);
 
+    uint8_t **png_raw =       matalloc(N_ROWS, N_COLS, 0, 0, sizeof(uint8_t));
+    double **JJRGMagnitudes = matalloc(N_ROWS, N_COLS, 0, 0, sizeof(double));
+    double **SGMagnitudes =   matalloc(N_ROWS, N_COLS, 0, 0, sizeof(double));
+    uint8_t **JJREEDGE =      matalloc(N_ROWS, N_COLS, 0, 0, sizeof(uint8_t));
+    uint8_t **SGEEDGE =       matalloc(N_ROWS, N_COLS, 0, 0, sizeof(uint8_t));
+
     //store entire image into memory
-    uint8_t **png_raw = matalloc(N_ROWS, N_COLS, 0, 0, sizeof(uint8_t));
     for (r = 0; r < N_ROWS; r++) pngReadRow(pngfile, png_raw[r]);
 
-    //for (r = 0; r < N_ROWS; r++){ 
-    //    padarray(png_raw[r], N_ROWS, N_COLS, 1, sizeof(uint8_t));
-    //}
-
-    double **JJRGMagnitudes = matalloc(N_ROWS, N_COLS, 0, 0, sizeof(double));
+    // store JJR and SG magnitudes of each pixel
     for (r = 1; r < N_ROWS - 1; r++) {
         for (c = 1; c < N_COLS - 1; c++) {
             JJRGMagnitudes[r][c] = JJRGradiantMagnitude(png_raw, r, c);
+            SGMagnitudes[r][c] = SGradiantMagnitude(png_raw, r, c);
         }
     }
 
-    uint8_t **JJREEDGE = matalloc(N_ROWS, N_COLS, 0, 0, sizeof(uint8_t));
-    for (r = 1; r < N_ROWS - 1; r++)
-        for (c = 1; c < N_COLS - 1; c++)
+    // produce edge map
+    for (r = 1; r < N_ROWS - 1; r++) {
+        for (c = 1; c < N_COLS - 1; c++) {
             JJREEDGE[r][c] = (JJRGMagnitudes[r][c] >= THRESH) ? 255 : 0;
+            SGEEDGE[r][c] = (SGMagnitudes[r][c] >= THRESH) ? 255 : 0;
+        }
+    }
 
+    // write edge map
     PNGFILE *JJR_out = pngOpen(JJR_EDGE, "w");
+    PNGFILE *SG_out = pngOpen(SG_EDGE, "w");
     pngWriteHdr(JJR_out, N_ROWS, N_COLS);
-    for (r = 0; r < N_ROWS; r++)
+    pngWriteHdr(SG_out, N_ROWS, N_COLS);
+    for (r = 0; r < N_ROWS; r++) {
         pngWriteRow(JJR_out, JJREEDGE[r]);
+        pngWriteRow(SG_out,  SGEEDGE[r]);
+    }
 
-
-    //print R1 magnitude and edge values
-    double R1_JJR_magnitude[5][5] = {0};
-    double R1_SG_magnitude[5][5] =  {0};
+    //store R1 magnitude and edge values
+    double R1_JJR_magnitude[5][5] = {0}, R1_SG_magnitude[5][5] =  {0};
     for (r = R1_R_START; r <= R1_R_END; r++) {
         for (c = R1_C_START; c <= R1_C_END; c++) {
             R1_JJR_magnitude[r-R1_R_START][c-R1_C_START] = JJRGMagnitudes[r][c];
-
-            SGM = SobelGradientMagnitude(png_raw, r, c);
-            R1_SG_magnitude[r-R1_R_START][c-R1_C_START] = SGM;
+            R1_SG_magnitude[r-R1_R_START][c-R1_C_START] = SGMagnitudes[r][c];
         }
     }
 
-    //print R2 magnitude and edge values
+    //store R2 magnitude and edge values
     double R2_JJR_magnitude[5][5] = {0};
     double R2_SG_magnitude[5][5] =  {0};
     for (r = R2_R_START; r <= R2_R_END; r++) {
         for (c = R2_C_START; c <= R2_C_END; c++) {
             R2_JJR_magnitude[r-R2_R_START][c-R2_C_START] = JJRGMagnitudes[r][c];
-
-            SGM = SobelGradientMagnitude(png_raw, r, c);
-            R2_SG_magnitude[r-R2_R_START][c-R2_C_START] = SGM;
+            R2_SG_magnitude[r-R2_R_START][c-R2_C_START] = SGMagnitudes[r][c];
         }
     }
 
-    printf("R1 JJR magnitude\n");
+    printf("R1 JJR magnitudes\n");
     printMap(*R1_JJR_magnitude, R1_R_END - R1_R_START, R1_C_END - R1_C_START);
 
-    printf("R2 JJR mangitude\n");
+    printf("R2 JJR mangitudes\n");
     printMap(*R2_JJR_magnitude, R2_R_END - R2_R_START, R2_C_END - R2_C_START);
 
-
-
-    printf("R1 SG magnitude\n");
+    printf("R1 SG magnitudes\n");
     printMap(*R1_SG_magnitude, R1_R_END - R1_R_START, R1_C_END - R1_C_START);
+
+    printf("R2 SG mangitudes\n");
+    printMap(*R2_SG_magnitude, R2_R_END - R2_R_START, R2_C_END - R2_C_START);
+
+    uint8_t R1_JJR_edge[5][5] = {0}, R2_JJR_edge[5][5] = {0};
+    uint8_t R1_SG_edge[5][5] = {0}, R2_SG_edge[5][5] = {0};
+
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            R1_JJR_edge[r][c] = (R1_JJR_magnitude[r][c] > THRESH) ? 255 : 0;
+            R2_JJR_edge[r][c] = (R2_JJR_magnitude[r][c] > THRESH) ? 255 : 0;
+            R1_SG_edge[r][c]  = (R1_SG_magnitude[r][c] > THRESH) ? 255 : 0;
+            R2_SG_edge[r][c]  = (R2_SG_magnitude[r][c] > THRESH) ? 255 : 0;
+        }
+    }
+
+
+
+    //printf("R1 JJR Edge\n");
+    //printMap(*R1_JJR_edge, R1_R_END - R1_R_START, R1_C_END - R1_C_START);
+
+    //printf("R2 JJR Edge\n");
+    //printMap(*R2_JJR_edge, R2_R_END - R2_R_START, R2_C_END - R2_C_START);
+
+    //printf("R1 SG Edge\n");
+    //printMap(*R1_SG_edge, R1_R_END - R1_R_START, R1_C_END - R1_C_START);
+
+    //printf("R2 SG Edge\n");
+    //printMap(*R2_SG_edge, R2_R_END - R2_R_START, R2_C_END - R2_C_START);
 
 
     goto cleanup;
@@ -101,6 +132,7 @@ cleanup:
     matfree(png_raw);
     pngClose(pngfile);
     pngClose(JJR_out);
+    pngClose(SG_out);
 }
 
 int cmpfunc (const void *a, const void * b)
@@ -168,9 +200,7 @@ cleanup:
 }
 
 // Rodriguez Edge Detector
-// modified 3x3 gradient operator that computes an edge map
-// E(r,c) from a grayscale input image I(r,c) as follows:
-// TODO: finish description
+// modified 3x3 gradient operator
 double JJRGradiantMagnitude(uint8_t **pngfile, int32_t row, int32_t col)
 {
     double Iy, Ix, G;
@@ -182,17 +212,49 @@ double JJRGradiantMagnitude(uint8_t **pngfile, int32_t row, int32_t col)
     return G;
 }
 
-
-double SobelGradientMagnitude(uint8_t **pngfile, int32_t row, int32_t col)
+double Double3x3Convolution(double a[3][3], double b[3][3])
 {
-    double G = 1;
-    // TODO: Sobel Gradient
+    double G = a[2][2]*b[0][0]
+              +a[2][1]*b[0][1]
+              +a[2][0]*b[0][2]
+              +a[1][2]*b[1][0]
+              +a[1][1]*b[1][1]
+              +a[1][0]*b[1][2]
+              +a[0][2]*b[2][0]
+              +a[0][1]*b[2][1]
+              +a[0][0]*b[2][0];
     return G;
 }
 
-void produce_output_edge_map()
+
+double SGradiantMagnitude(uint8_t **pngfile, int32_t r, int32_t c)
 {
-    //TODO: implement
+    double Gx = 0, Gy = 0, G = 0;
+
+    double x[3][3] = {
+            {+1, 0, -1},
+            {+2, 0, -2},
+            {+1, 0, -1}
+    };
+
+    double y[3][3] = {
+            {+1, +2, +1},
+            {0, 0, 0},
+            {-1, -2, -1}
+    };
+
+    double A[3][3] = {
+        {pngfile[r-1][c-1], pngfile[r-1][c], pngfile[r-1][c+1]},
+        {pngfile[r][c-1], pngfile[r][c],pngfile[r][c+1]},
+        {pngfile[r+1][c-1], pngfile[r+1][c], pngfile[r+1][c+1]}
+    };
+
+    Gx = Double3x3Convolution(x,A);
+    Gy = Double3x3Convolution(y,A);
+
+    G = sqrt( pow(Gx,2) + pow(Gy,2) );
+
+    return G;
 }
 
 void printMap(double *map, int32_t nrows, int32_t ncols)
@@ -238,7 +300,4 @@ print_bottom:
         printf("┘\n");
         return;
 }
-
-
-
 
