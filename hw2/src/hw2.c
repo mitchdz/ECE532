@@ -8,7 +8,7 @@
 #include "matfree.c"
 #include "pngReadRow.c"
 
-void **png_raw;
+uint8_t **png_raw;
 int32_t N_COLS = 0;
 int32_t N_ROWS = 0;
 
@@ -82,17 +82,17 @@ double JJRMedian(PNGFILE *pngfile, int32_t r, int32_t c,
             break;
     }
 YMedian:
-    lvalues[0] = (uint8_t)(png_raw[r] + c-1);
-    lvalues[1] = (uint8_t)(png_raw[r] + c+1);
-    lvalues[2] = (uint8_t)(png_raw[r-1] + c-1);
-    lvalues[3] = (uint8_t)(png_raw[r-1] + c);
-    lvalues[4] = (uint8_t)(png_raw[r-1] + c+1);
+    lvalues[0] = png_raw[r][c-1];
+    lvalues[1] = png_raw[r][c+1];
+    lvalues[2] = png_raw[r-1][c-1];
+    lvalues[3] = png_raw[r-1][c];
+    lvalues[4] = png_raw[r-1][c+1];
 
-    rvalues[0] = (uint8_t)(png_raw[r] + c-1);
-    rvalues[1] = (uint8_t)(png_raw[r] + c+1);
-    rvalues[2] = (uint8_t)(png_raw[r+1] + c-1);
-    rvalues[3] = (uint8_t)(png_raw[r+1] + c);
-    rvalues[4] = (uint8_t)(png_raw[r+1] + c+1);
+    rvalues[0] = png_raw[r][c-1];
+    rvalues[1] = png_raw[r][c+1];
+    rvalues[2] = png_raw[r+1][c-1];
+    rvalues[3] = png_raw[r+1][c];
+    rvalues[4] = png_raw[r+1][c+1];
 
     qsort(lvalues, 5, sizeof(uint8_t), cmpfunc);
     qsort(rvalues, 5, sizeof(uint8_t), cmpfunc);
@@ -102,17 +102,17 @@ YMedian:
     medianVal = lmedian - rmedian;
     goto cleanup;
 XMedian:
-    lvalues[0] = (uint8_t)(png_raw[r-1] + c);
-    lvalues[1] = (uint8_t)(png_raw[r-1] + c+1);
-    lvalues[2] = (uint8_t)(png_raw[r] + c+1);
-    lvalues[3] = (uint8_t)(png_raw[r+1] + c);
-    lvalues[4] = (uint8_t)(png_raw[r+1] + c+1);
+    lvalues[0] = png_raw[r-1][c];
+    lvalues[1] = png_raw[r-1][c+1];
+    lvalues[2] = png_raw[r][c+1];
+    lvalues[3] = png_raw[r+1][c];
+    lvalues[4] = png_raw[r+1][c+1];
 
-    rvalues[0] = (uint8_t)(png_raw[r-1] + c-1);
-    rvalues[1] = (uint8_t)(png_raw[r-1] + c);
-    rvalues[2] = (uint8_t)(png_raw[r] + c-1);
-    rvalues[3] = (uint8_t)(png_raw[r+1] + c-1);
-    rvalues[4] = (uint8_t)(png_raw[r+1] + c);
+    rvalues[0] = png_raw[r-1][c-1];
+    rvalues[1] = png_raw[r-1][c];
+    rvalues[2] = png_raw[r][c-1];
+    rvalues[3] = png_raw[r+1][c-1];
+    rvalues[4] = png_raw[r+1][c];
 
     qsort(lvalues, 5, sizeof(uint8_t), cmpfunc);
     qsort(rvalues, 5, sizeof(uint8_t), cmpfunc);
