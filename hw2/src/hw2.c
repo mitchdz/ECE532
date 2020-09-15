@@ -43,6 +43,9 @@ void analyzeImage()
     //store entire image into memory
     for (r = 0; r < N_ROWS; r++) pngReadRow(pngfile, png_raw[r]);
 
+    SGMagnitudes[205][182] = SGradiantMagnitude(png_raw, 205, 182);
+    goto cleanup;
+
     // store JJR and SG magnitudes of each pixel
     for (r = 1; r < N_ROWS - 1; r++) {
         for (c = 1; c < N_COLS - 1; c++) {
@@ -192,12 +195,12 @@ double JJRGradiantMagnitude(uint8_t **pngfile, int32_t row, int32_t col)
     return G;
 }
 
-double Double3x3Convolution(double a[3][3], int8_t b[3][3])
+double Double3x3Convolution(double a[3][3], uint8_t b[3][3])
 {
     double G = 0;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            G += a[i][j]*b[i][j];
+            G += (a[i][j]* (int8_t)b[i][j]);
         }
     }
 
@@ -221,18 +224,17 @@ double SGradiantMagnitude(uint8_t **pngfile, int32_t r, int32_t c)
             {-1, -2, -1}
     };
 
-    int8_t A[3][3] = {
+    uint8_t A[3][3] = {
         {pngfile[r-1][c-1], pngfile[r-1][c], pngfile[r-1][c+1]},
-        {pngfile[r][c-1], pngfile[r][c],pngfile[r][c+1]},
+        {pngfile[ r ][c-1], pngfile[ r ][c], pngfile[ r ][c+1]},
         {pngfile[r+1][c-1], pngfile[r+1][c], pngfile[r+1][c+1]}
     };
 
-
-    //for (int i = 0; i < 3; i++) {
-    //    for (int j = 0; j < 3; j++) {
-    //        printf("A[%d][%d]: %lf\n", i, j, (double)A[i][j]);
-    //    }
-    //}
+    for ( int i = 0; i < 3; i++) {
+        for ( int j=0; j < 3; j++) {
+           printf("A[%d][%d]:%d\n", i, j, A[i][j]);
+        }
+    }
 
 
     Gx = Double3x3Convolution(x,A);
