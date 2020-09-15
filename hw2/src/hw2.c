@@ -69,22 +69,28 @@ void analyzeImage()
         pngWriteRow(SG_out,  SGEEDGE[r]);
     }
 
+    uint8_t R1_SG_edge[5][5] = {0}, R2_SG_edge[5][5] = {0};
+    uint8_t R1_JJR_edge[5][5] = {0}, R2_JJR_edge[5][5] = {0};
+
     //store R1 magnitude and edge values
     double R1_JJR_magnitude[5][5] = {0}, R1_SG_magnitude[5][5] =  {0};
     for (r = R1_R_START; r <= R1_R_END; r++) {
         for (c = R1_C_START; c <= R1_C_END; c++) {
             R1_JJR_magnitude[r-R1_R_START][c-R1_C_START] = JJRGMagnitudes[r][c];
             R1_SG_magnitude[r-R1_R_START][c-R1_C_START] = SGMagnitudes[r][c];
+            R1_JJR_edge[r-R1_R_START][c-R1_C_START] = JJREEDGE[r][c];
+            R1_SG_edge[r-R1_R_START][c-R1_C_START] = SGEEDGE[r][c];
         }
     }
 
     //store R2 magnitude and edge values
-    double R2_JJR_magnitude[5][5] = {0};
-    double R2_SG_magnitude[5][5] =  {0};
+    double R2_JJR_magnitude[5][5] = {0}, R2_SG_magnitude[5][5] =  {0};
     for (r = R2_R_START; r <= R2_R_END; r++) {
         for (c = R2_C_START; c <= R2_C_END; c++) {
             R2_JJR_magnitude[r-R2_R_START][c-R2_C_START] = JJRGMagnitudes[r][c];
             R2_SG_magnitude[r-R2_R_START][c-R2_C_START] = SGMagnitudes[r][c];
+            R2_JJR_edge[r-R2_R_START][c-R2_C_START] = JJREEDGE[r][c];
+            R2_SG_edge[r-R2_R_START][c-R2_C_START] = SGEEDGE[r][c];
         }
     }
 
@@ -99,32 +105,6 @@ void analyzeImage()
 
     printf("R2 SG mangitudes\n");
     printMap(*R2_SG_magnitude, R2_R_END - R2_R_START, R2_C_END - R2_C_START);
-
-    uint8_t R1_JJR_edge[5][5] = {0}, R2_JJR_edge[5][5] = {0};
-    uint8_t R1_SG_edge[5][5] = {0}, R2_SG_edge[5][5] = {0};
-
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            R1_JJR_edge[r][c] = (R1_JJR_magnitude[r][c] > THRESH) ? 255 : 0;
-            R2_JJR_edge[r][c] = (R2_JJR_magnitude[r][c] > THRESH) ? 255 : 0;
-            R1_SG_edge[r][c]  = (R1_SG_magnitude[r][c] > THRESH) ? 255 : 0;
-            R2_SG_edge[r][c]  = (R2_SG_magnitude[r][c] > THRESH) ? 255 : 0;
-        }
-    }
-
-
-
-    //printf("R1 JJR Edge\n");
-    //printMap(*R1_JJR_edge, R1_R_END - R1_R_START, R1_C_END - R1_C_START);
-
-    //printf("R2 JJR Edge\n");
-    //printMap(*R2_JJR_edge, R2_R_END - R2_R_START, R2_C_END - R2_C_START);
-
-    //printf("R1 SG Edge\n");
-    //printMap(*R1_SG_edge, R1_R_END - R1_R_START, R1_C_END - R1_C_START);
-
-    //printf("R2 SG Edge\n");
-    //printMap(*R2_SG_edge, R2_R_END - R2_R_START, R2_C_END - R2_C_START);
 
 
     goto cleanup;
@@ -212,17 +192,15 @@ double JJRGradiantMagnitude(uint8_t **pngfile, int32_t row, int32_t col)
     return G;
 }
 
-double Double3x3Convolution(double a[3][3], double b[3][3])
+double Double3x3Convolution(double a[3][3], int8_t b[3][3])
 {
-    double G = a[2][2]*b[0][0]
-              +a[2][1]*b[0][1]
-              +a[2][0]*b[0][2]
-              +a[1][2]*b[1][0]
-              +a[1][1]*b[1][1]
-              +a[1][0]*b[1][2]
-              +a[0][2]*b[2][0]
-              +a[0][1]*b[2][1]
-              +a[0][0]*b[2][0];
+    double G = 0;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            G += a[i][j]*b[i][j];
+        }
+    }
+
     return G;
 }
 
@@ -232,27 +210,35 @@ double SGradiantMagnitude(uint8_t **pngfile, int32_t r, int32_t c)
     double Gx = 0, Gy = 0, G = 0;
 
     double x[3][3] = {
-            {+1, 0, -1},
-            {+2, 0, -2},
-            {+1, 0, -1}
+            {-1, 0, 1},
+            {-2, 0, 2},
+            {-1, 0, 1}
     };
 
     double y[3][3] = {
-            {+1, +2, +1},
+            {1, 2, 1},
             {0, 0, 0},
             {-1, -2, -1}
     };
 
-    double A[3][3] = {
+    int8_t A[3][3] = {
         {pngfile[r-1][c-1], pngfile[r-1][c], pngfile[r-1][c+1]},
         {pngfile[r][c-1], pngfile[r][c],pngfile[r][c+1]},
         {pngfile[r+1][c-1], pngfile[r+1][c], pngfile[r+1][c+1]}
     };
 
+
+    //for (int i = 0; i < 3; i++) {
+    //    for (int j = 0; j < 3; j++) {
+    //        printf("A[%d][%d]: %lf\n", i, j, (double)A[i][j]);
+    //    }
+    //}
+
+
     Gx = Double3x3Convolution(x,A);
     Gy = Double3x3Convolution(y,A);
 
-    G = sqrt( pow(Gx,2) + pow(Gy,2) );
+    G = sqrt(pow(Gx,2)+pow(Gy,2));
 
     return G;
 }
