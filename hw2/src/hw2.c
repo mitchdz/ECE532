@@ -240,7 +240,8 @@ void printDouble5x5(double a[5][5])
 {
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
-            printf("%.2lf,", a[i][j]);
+            printf("%.2lf", a[i][j]);
+            if (j != 4) printf(",");
         }
         printf("\n");
     }
@@ -251,7 +252,8 @@ void printuint8_t5x5(uint8_t a[5][5])
 {
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
-            printf("%d,", a[i][j]);
+            printf("%d", a[i][j]);
+            if (j != 4) printf(",");
         }
         printf("\n");
     }
