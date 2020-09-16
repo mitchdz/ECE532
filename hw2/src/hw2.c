@@ -25,7 +25,6 @@ exit:
     return 0;
 }
 
-
 void analyzeImage()
 {
     int32_t c, r;
@@ -205,7 +204,7 @@ double Double3x3DotProduct(double a[3][3], uint8_t b[3][3])
     return G;
 }
 
-
+//Sobel Gradient
 double SGradiantMagnitude(uint8_t **pf, int32_t r, int32_t c)
 {
     double Gx = 0, Gy = 0, G = 0;
@@ -235,6 +234,7 @@ double SGradiantMagnitude(uint8_t **pf, int32_t r, int32_t c)
 
     return G;
 }
+
 
 void printDouble5x5(double a[5][5])
 {
