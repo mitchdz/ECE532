@@ -87,10 +87,10 @@ void analyzeImage()
         }
     }
 
-    printf("R1 JJR magnitudes\n"); printDouble5x5(R1_JJR_magnitude);
-    printf("R2 JJR magnitudes\n"); printDouble5x5(R2_JJR_magnitude);
-    printf("R1 SG  magnitudes\n"); printDouble5x5(R1_SG_magnitude);
-    printf("R2 SG  magnitudes\n"); printDouble5x5(R2_SG_magnitude);
+    printf("R1 JJR magnitudes\n"); printDouble5x5(R1_JJR_magnitude); printf("\n");
+    printf("R2 JJR magnitudes\n"); printDouble5x5(R2_JJR_magnitude); printf("\n");
+    printf("R1 SG  magnitudes\n"); printDouble5x5(R1_SG_magnitude); printf("\n");
+    printf("R2 SG  magnitudes\n"); printDouble5x5(R2_SG_magnitude); printf("\n");
 
     uint8_t R1_JJR_edge[5][5] = {0}, R2_JJR_edge[5][5] = {0};
     uint8_t R1_SG_edge[5][5]  = {0}, R2_SG_edge[5][5]  = {0};
@@ -103,10 +103,10 @@ void analyzeImage()
             R2_SG_edge [r][c] = (R2_SG_magnitude [r][c] > THRESH) ? 255 : 0;
         }
     }
-    printf("R1 JJR edge map\n");  printuint8_t5x5(R1_JJR_edge);
-    printf("R2 JJR edge map\n");  printuint8_t5x5(R2_JJR_edge);
-    printf("R1 SG  edge map\n");  printuint8_t5x5(R1_SG_edge);
-    printf("R2 SG  edge map\n");  printuint8_t5x5(R2_SG_edge);
+    printf("R1 JJR edge map\n");  printuint8_t5x5(R1_JJR_edge); printf("\n");
+    printf("R2 JJR edge map\n");  printuint8_t5x5(R2_JJR_edge); printf("\n");
+    printf("R1 SG  edge map\n");  printuint8_t5x5(R1_SG_edge); printf("\n");
+    printf("R2 SG  edge map\n");  printuint8_t5x5(R2_SG_edge); printf("\n");
 
     goto cleanup;
 cleanup:
