@@ -7,15 +7,10 @@
 #define SG_EDGE "hw2_SG_EDGE.png"
 #define THRESH 60
 
-#define R1_R_START 205
-#define R1_R_END   209
-#define R1_C_START 182
-#define R1_C_END   186
-
-#define R2_R_START 347
-#define R2_R_END   351
-#define R2_C_START 350
-#define R2_C_END   354
+#define R1_R_START 349
+#define R1_R_END   353
+#define R1_C_START 349
+#define R1_C_END   353
 
 enum MedianDirection {
     X = 0,

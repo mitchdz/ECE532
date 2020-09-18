@@ -77,36 +77,18 @@ void analyzeImage()
         }
     }
 
-    //store R2 magnitude and edge values
-    double R2_JJR_magnitude[5][5] = {0};
-    double R2_SG_magnitude[5][5] =  {0};
-    for (r = R2_R_START; r <= R2_R_END; r++) {
-        for (c = R2_C_START; c <= R2_C_END; c++) {
-            R2_JJR_magnitude[r-R2_R_START][c-R2_C_START] = JJRGMagnitudes[r][c];
-            R2_SG_magnitude[r-R2_R_START][c-R2_C_START] = SGMagnitudes[r][c];
+    uint8_t R1_JJR_edge[5][5] = {0}, R1_SG_edge[5][5]  = {0};
+    for (r = 0; r < 5; r++) {
+        for (c = 0; c < 5; c++) {
+            R1_JJR_edge[r][c] = (R1_JJR_magnitude[r][c] > THRESH) ? 255 : 0;
+            R1_SG_edge [r][c] = (R1_SG_magnitude [r][c] > THRESH) ? 255 : 0;
         }
     }
 
     printf("R1 JJR magnitudes\n"); printDouble5x5(R1_JJR_magnitude); printf("\n");
-    printf("R2 JJR magnitudes\n"); printDouble5x5(R2_JJR_magnitude); printf("\n");
-    printf("R1 SG  magnitudes\n"); printDouble5x5(R1_SG_magnitude); printf("\n");
-    printf("R2 SG  magnitudes\n"); printDouble5x5(R2_SG_magnitude); printf("\n");
-
-    uint8_t R1_JJR_edge[5][5] = {0}, R2_JJR_edge[5][5] = {0};
-    uint8_t R1_SG_edge[5][5]  = {0}, R2_SG_edge[5][5]  = {0};
-
-    for (r = 0; r < 5; r++) {
-        for (c = 0; c < 5; c++) {
-            R1_JJR_edge[r][c] = (R1_JJR_magnitude[r][c] > THRESH) ? 255 : 0;
-            R2_JJR_edge[r][c] = (R2_JJR_magnitude[r][c] > THRESH) ? 255 : 0;
-            R1_SG_edge [r][c] = (R1_SG_magnitude [r][c] > THRESH) ? 255 : 0;
-            R2_SG_edge [r][c] = (R2_SG_magnitude [r][c] > THRESH) ? 255 : 0;
-        }
-    }
     printf("R1 JJR edge map\n");  printuint8_t5x5(R1_JJR_edge); printf("\n");
-    printf("R2 JJR edge map\n");  printuint8_t5x5(R2_JJR_edge); printf("\n");
+    printf("R1 SG  magnitudes\n"); printDouble5x5(R1_SG_magnitude); printf("\n");
     printf("R1 SG  edge map\n");  printuint8_t5x5(R1_SG_edge); printf("\n");
-    printf("R2 SG  edge map\n");  printuint8_t5x5(R2_SG_edge); printf("\n");
 
     goto cleanup;
 cleanup:
@@ -188,7 +170,7 @@ double JJRGradiantMagnitude(uint8_t **pngfile, int32_t row, int32_t col)
     Iy = JJRMedian(pngfile, row, col, Y);
     Ix = JJRMedian(pngfile, row, col, X);
 
-    G = sqrt(pow(Iy,2)+pow(Ix,2)) / 1.2;
+    G = sqrt(pow(Iy,2)+pow(Ix,2)) / 2;
 
     return G;
 }
