@@ -6,6 +6,7 @@ to build and run the program change directory to src and then run
 
 both output edge files will be generated in the src folder and the values for the region will be printed to the terminal. The outputs below are as follows:
 
+image is 601 rows by 960 cols
 R1 JJR magnitudes
 1.58,2.00,27.58,120.92,74.95
 0.71,3.00,123.04,102.53,11.63
@@ -21,16 +22,16 @@ R1 JJR edge map
 255,0,0,0,0
 
 R1 SG  magnitudes
-0.73,2.93,3.58,32.24,57.31
-2.80,10.40,34.05,43.31,20.55
-26.34,47.55,42.31,17.90,0.75
-37.22,28.54,3.40,6.01,12.49
-47.96,56.42,14.78,6.63,17.11
+0.73,2.93,48.79,103.61,78.51
+2.80,36.83,104.19,92.46,30.83
+18.92,92.72,99.03,29.13,0.75
+65.80,116.06,42.28,6.01,12.49
+108.05,92.34,14.78,6.63,17.11
 
 R1 SG  edge map
-0,0,0,0,0
-0,0,0,0,0
-0,0,0,0,0
-0,0,0,0,0
-0,0,0,0,0
+0,0,0,255,255
+0,0,255,255,0
+0,255,255,0,0
+255,255,0,0,0
+255,255,0,0,0
 
