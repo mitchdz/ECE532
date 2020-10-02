@@ -1,41 +1,50 @@
 PROGNAME = hw3
 
-LINKER = gcc
-LDFLAGS =  L$(PROVIDED_LIBDIR) -L$(LIBDIR)
-LDLIBS = -ldip -lpng -lz -lm
+LINKER=gcc
+LDFLAGS =-L$(BINDIR)
+LDLIBS =-ldip -lpng -lz -lm
+CC =gcc
+CFLAGS =-g -Wall -I$(LIBDIR) -I$(SRCDIR)
 
-SRCDIR = src
-OBJDIR = obj
-BINDIR = bin
-
-LIBDIR = /usr/lib
-PROVIDED_LIBDIR = ./provided_libs
+SRCDIR =src
+OBJDIR =obj
+BINDIR =bin
+LIBDIR =/usr/lib
 
 SOURCES := $(wildcard $(SRCDIR)/*.c)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+# LIBDIP_OBJECTS groups every source other than hw3.c and hw3.h
+LIBDIP_OBJECTS := $(filter-out hw%.c, $(OBJECTS))
 
-CC = gcc
-CFLAGS = -g -Wall -I$(PROVIDED_LIBDIR)
+.PHONY: all
+all: create_dirs $(BINDIR)/$(PROGNAME)
+	mkdir -p $(OBJDIR)
+	mkdir -p $(BINDIR)
 
-all:$(BINDIR)/$(PROGNAME)
-
-$(BINDIR)/$(PROGNAME): $(OBJECTS)
-	@$(LINKER) $(OBJECTS) $(LFLAGS) -i $@
-
+$(BINDIR)/$(PROGNAME): $(OBJECTS) $(BUILD)/libdip.a
+	$(LINKER) obj/hw3.o $(LDFLAGS) $(LDLIBS) -o $@
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD)/libdip.a: $(OBJECTS)
+	ar rc $(BINDIR)/libdip.a $(LIBDIP_OBJECTS)
 
-hw3:$(BUILD)/libdip.a
+.PHONY: run
+run: all
+	./bin/hw3
 
-$(BUILD)/libdip.a:$(BUILD)$(LIBOBJECTS)
-	ar rc $(BUILD)/libdip.a $(LIBOBJECTS)
+.PHONY: create_dirs
+create_dirs:
+	mkdir -p $(OBJDIR)
+	mkdir -p $(BINDIR)
 
 .PHONY: clean
 clean:
-	@ rm -f $(OBJECTS) $(BINDIR)
+	rm -rf $(OBJDIR) $(BINDIR) submission/ out/
 
-
-
+.PHONY: submission
+submission: run
+	mkdir -p submission/
+	echo "TODO: implement"

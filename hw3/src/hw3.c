@@ -4,7 +4,7 @@
 #include "pngOpen.c"
 #include "pngReadHdr.c"
 #include "pngErrorHandler.c"
-#include "hw2.h"
+#include "hw3.h"
 #include "matfree.c"
 #include "pngReadRow.c"
 #include "padarray.c"
