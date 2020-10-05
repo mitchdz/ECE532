@@ -39,6 +39,7 @@ run: all
 create_dirs:
 	mkdir -p $(OBJDIR)
 	mkdir -p $(BINDIR)
+	mkdir -p out
 
 .PHONY: clean
 clean:
