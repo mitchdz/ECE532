@@ -116,7 +116,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
 
                     // theta is between 0 and 100 in Hough Array
                     // theta value will be theta*100/M_PI
-                    HA_theta = (int8_t)(theta*100/M_PI);
+                    HA_theta = (uint8_t)(theta*100/M_PI);
 
                     // rho will be between 0 and 100 in the hough array,
                     // but the rho values can be between -N and Nsqrt(2)
@@ -126,7 +126,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
                     // 0 -> 100
                     // we calculate the scaled value as
                     // new value = (old_val - old_min)/(old_max - old_min) * new_max
-                    HA_rho = (int)((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*100;
+                    HA_rho = (uint8_t)((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*100;
 
                     //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
                     HA[HA_rho][HA_theta]++;
