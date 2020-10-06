@@ -48,7 +48,7 @@ void analyzeImage()
 
 
     //scale HoughArray
-    int max = 0;
+    double max = 0;
     for (r = 0; r < HOUGH_ROWS; r++) {
         for (c  = 0; c < HOUGH_COLS; c++) {
             max = (HA[r][c] > max) ? HA[r][c] : max;
@@ -57,7 +57,7 @@ void analyzeImage()
 
     for (r = 0; r < HOUGH_ROWS; r++) {
         for (c  = 0; c < HOUGH_COLS; c++) {
-            HA[r][c] = ((HA[r][c] - 0)/(max - 0))*(100-0)+0;
+            HA[r][c] = (HA[r][c]/max)*255;
         }
     }
 
@@ -120,12 +120,12 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
         for (c = 0; c < n_cols; c++) {
             valid_edge = (edge_map[r][c] > 100) ? true : false;
             if (valid_edge) {
-                for (theta = 0; theta < M_PI; theta += M_PI/100) {
+                for (theta = 0; theta < M_PI; theta += M_PI/99) {
                     p = r*cos(theta) + c*sin(theta);
 
                     // theta is between 0 and 100 in Hough Array
-                    // theta value will be theta*100/M_PI
-                    HA_theta = (uint8_t)(theta*100/M_PI);
+                    // theta value will be theta*99/M_PI
+                    HA_theta = (uint8_t)(theta*99/M_PI);
 
                     // rho will be between 0 and 100 in the hough array,
                     // but the rho values can be between -N and Nsqrt(2)
