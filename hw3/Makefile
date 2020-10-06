@@ -2,9 +2,9 @@ PROGNAME = hw3
 
 LINKER=gcc
 LDFLAGS =-L$(BINDIR)
-LDLIBS =-ldip -lpng -lz -lm
+LDLIBS =-ldip -lpng -lz -lm -fopenmp
 CC =gcc
-CFLAGS =-g -Wall -I$(LIBDIR) -I$(SRCDIR)
+CFLAGS =-O2 -fopenmp -I$(LIBDIR) -I$(SRCDIR) #-g -Wall
 
 SRCDIR =src
 OBJDIR =obj

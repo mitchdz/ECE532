@@ -1,3 +1,4 @@
+//#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "pngio.h"
@@ -28,7 +29,7 @@ exit:
 }
 
 void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
-        uint16_t **HA, bool debug);
+        int32_t **HA);
 
 void analyzeImage()
 {
@@ -36,15 +37,15 @@ void analyzeImage()
 
     PNGFILE *pngfile = pngOpen(INPUT_PICTURE, "r");
     pngReadHdr(pngfile, &n_rows, &n_cols);
+    printf("image is %d rows by %d cols\n", n_rows, n_cols);
 
     uint8_t  **png_raw =    matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
-    uint16_t **HA = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(uint8_t));
+    int32_t **HA = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(int32_t));
 
     //store entire image into memory
     for (r = 0; r < n_rows; r++) pngReadRow(pngfile, png_raw[r]);
 
-    HTStraightLine(png_raw, n_rows, n_cols, HA, true);
-    printf("image is %d rows by %d cols\n", n_rows, n_cols);
+    HTStraightLine(png_raw, n_rows, n_cols, HA);
 
     //scale HoughArray
     for (r = 0; r < HOUGH_ROWS; r++) {
@@ -53,12 +54,12 @@ void analyzeImage()
         }
     }
 
-    //TODO: NMS Non-Maxima Supression
+    //TODO: NMS (Non-Maxima Supression)
 
     // write grayscale to file
     PNGFILE *output_png = pngOpen(OUTPUT_PICTURE, "w");
     pngWriteHdr(output_png, HOUGH_ROWS, HOUGH_COLS);
-    for (r = 0; r < HOUGH_ROWS; r++) pngWriteRow(output_png, HA[r]);
+    for (r = 0; r < HOUGH_ROWS; r++) pngWriteRow(output_png, (uint8_t *)HA[r]);
 
     goto cleanup;
 cleanup:
@@ -66,6 +67,7 @@ cleanup:
     matfree(HA);
     pngClose(pngfile);
     pngClose(output_png);
+    return;
 }
 
 /* @brief performs Hough Transform using rho/theta parameterization on an
@@ -80,12 +82,8 @@ cleanup:
  * @note writes values into HA
  */
 void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
-        uint16_t **HA, bool debug)
+        int32_t **HA)
 {
-    uint8_t p=0;
-
-    printf("rows: %d, cols: %d\n", n_rows, n_cols);
-
     // Step 1. Allocate a Hough Array H(p, o)
     // already done in main :)
 
@@ -97,20 +95,29 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
      *     end
      * end
      */
-    for (uint8_t r = 0; r < n_rows; r++) {
-        for (uint8_t c = 0; c < n_cols; c++) {
-            if (debug) printf("edge[%d][%d]: %d\n", r, c, edge_map[r][c]);
-            for (int8_t theta = 0; theta <= 90; theta++) {
-                p = r*cos(theta) + c*sin(theta);
+    int32_t r, c, p, theta;
+    bool valid_edge;
+    #pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
+    for (r = 0; r < n_rows; r++) {
+        for (c = 0; c < n_cols; c++) {
+            valid_edge = (edge_map[r][c] == 255) ? true : false;
+            if (valid_edge) {
+                for (theta = -M_PI/2; theta <= M_PI; theta++) {
+                    p = r*cos(theta) + c*sin(theta);
 
-                if (debug) printf(" theta: %d, p:%d\n", theta, p);
-                if ( p >= 100) p = 99;
+                    if ( p >= 100) p = 99;
+                    if (p < 0) p = 0;
 
-                //if (debug) printf("HA[p][theta]: %d\n", HA[p][theta]);
-                HA[p][theta] += 1;
+                    if (theta < 0) theta = 0;
+
+
+                    printf("r:%d\tc:%d\ttheta: %d\tp:%d\n", r, c, theta, p);
+                    HA[p][theta]++;
+                }
             }
         }
     }
+    return;
 }
 
 
