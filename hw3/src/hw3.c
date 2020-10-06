@@ -8,7 +8,9 @@
 #include "matfree.c"
 #include "pngReadRow.c"
 #include "padarray.c"
+#include <limits.h>
 #include <stdbool.h>
+#include <float.h>
 #include <math.h>
 
 #define HOUGH_ROWS 100
@@ -40,6 +42,7 @@ void analyzeImage()
 
     uint8_t **png_raw = matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
     int32_t **HA      = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(int32_t));
+    uint8_t **HAout   = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(uint8_t));
 
     //store entire image into memory
     for (r = 0; r < n_rows; r++) pngReadRow(pngfile, png_raw[r]);
@@ -48,16 +51,17 @@ void analyzeImage()
 
 
     //scale HoughArray
-    double max = 0;
+    double max = DBL_MIN, min = DBL_MAX;
     for (r = 0; r < HOUGH_ROWS; r++) {
         for (c  = 0; c < HOUGH_COLS; c++) {
             max = (HA[r][c] > max) ? HA[r][c] : max;
+            min = (HA[r][c] < min) ? HA[r][c] : min;
         }
     }
 
     for (r = 0; r < HOUGH_ROWS; r++) {
         for (c  = 0; c < HOUGH_COLS; c++) {
-            HA[r][c] = (HA[r][c]/max)*255;
+            HAout[r][c] = ((HA[r][c]-min)/(max-min))*255;
         }
     }
 
@@ -67,7 +71,7 @@ void analyzeImage()
     // write grayscale to file
     PNGFILE *output_png = pngOpen(OUTPUT_PICTURE, "w");
     pngWriteHdr(output_png, HOUGH_ROWS, HOUGH_COLS);
-    for (r = 0; r < HOUGH_ROWS; r++) pngWriteRow(output_png, (uint8_t *)HA[r]);
+    for (r = 0; r < HOUGH_ROWS; r++) pngWriteRow(output_png, HAout[r]);
 
     goto cleanup;
 cleanup:
@@ -111,6 +115,8 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
     int HA_rho_min = n_cols;
     int HA_rho_max = (int)sqrt(pow(n_rows,2)+pow(n_cols,2));
 
+    printf("HA_rho_min: %d HA_rho_max: %d\n", HA_rho_min, HA_rho_max);
+
     int32_t r, c;
     int8_t HA_theta, HA_rho;
     double theta, p;
@@ -123,7 +129,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
                 for (theta = 0; theta < M_PI; theta += M_PI/99) {
                     p = r*cos(theta) + c*sin(theta);
 
-                    // theta is between 0 and 100 in Hough Array
+                    // theta is between 0 and 99 in Hough Array
                     // theta value will be theta*99/M_PI
                     HA_theta = theta*99/M_PI;
 
@@ -132,10 +138,10 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
                     // so in the case of the provided edge map we map
                     // -256 -> 352
                     // to
-                    // 0 -> 100
+                    // 0 -> 99
                     // we calculate the scaled value as
                     // new value = (old_val - old_min)/(old_max - old_min) * new_max
-                    HA_rho = (p + HA_rho_min)/(HA_rho_max + HA_rho_min)*99;
+                    HA_rho = ((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*99;
 
                     //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
                     HA[HA_rho][HA_theta]++;
