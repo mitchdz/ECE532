@@ -46,12 +46,21 @@ void analyzeImage()
 
     HTStraightLine(png_raw, n_rows, n_cols, HA);
 
+
     //scale HoughArray
+    int max = 0;
     for (r = 0; r < HOUGH_ROWS; r++) {
         for (c  = 0; c < HOUGH_COLS; c++) {
-            //if (HA[r][c] > 255) HA[r][c] = 255;
+            max = (HA[r][c] > max) ? HA[r][c] : max;
         }
     }
+
+    for (r = 0; r < HOUGH_ROWS; r++) {
+        for (c  = 0; c < HOUGH_COLS; c++) {
+            HA[r][c] = ((HA[r][c] - 0)/(max - 0))*(100-0)+0;
+        }
+    }
+
 
     //TODO: NMS (Non-Maxima Supression)
 
@@ -106,10 +115,10 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
     int8_t HA_theta, HA_rho;
     double theta, p;
     bool valid_edge;
-    #pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
-    for (c = 0; c < n_cols; c++) {
-        for (r = 0; r < n_rows; r++) {
-            valid_edge = (edge_map[r][c] == 255) ? true : false;
+    //#pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
+    for (r = 0; r < n_rows; r++) {
+        for (c = 0; c < n_cols; c++) {
+            valid_edge = (edge_map[r][c] > 100) ? true : false;
             if (valid_edge) {
                 for (theta = 0; theta < M_PI; theta += M_PI/100) {
                     p = r*cos(theta) + c*sin(theta);
@@ -126,7 +135,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
                     // 0 -> 100
                     // we calculate the scaled value as
                     // new value = (old_val - old_min)/(old_max - old_min) * new_max
-                    HA_rho = (p + HA_rho_min)/(HA_rho_max + HA_rho_min)*100;
+                    HA_rho = (p + HA_rho_min)/(HA_rho_max + HA_rho_min)*99;
 
                     //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
                     HA[HA_rho][HA_theta]++;
