@@ -115,7 +115,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
     int8_t HA_theta, HA_rho;
     double theta, p;
     bool valid_edge;
-    //#pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
+    #pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
     for (r = 0; r < n_rows; r++) {
         for (c = 0; c < n_cols; c++) {
             valid_edge = (edge_map[r][c] > 100) ? true : false;
