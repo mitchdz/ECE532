@@ -99,7 +99,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
     // -pi/2 <= theta < pi
     // -n_rows <= p <= sqrt(r^2 + c^2)
     //
-    int HA_rho_min = n_rows;
+    int HA_rho_min = n_cols;
     int HA_rho_max = (int)sqrt(pow(n_rows,2)+pow(n_cols,2));
 
     int32_t r, c;
@@ -107,11 +107,11 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
     double theta, p;
     bool valid_edge;
     #pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
-    for (r = 0; r < n_rows; r++) {
-        for (c = 0; c < n_cols; c++) {
+    for (c = 0; c < n_cols; c++) {
+        for (r = 0; r < n_rows; r++) {
             valid_edge = (edge_map[r][c] == 255) ? true : false;
             if (valid_edge) {
-                for (theta = 0; theta < M_PI; theta += (double)(M_PI/100)) {
+                for (theta = 0; theta < M_PI; theta += M_PI/100) {
                     p = r*cos(theta) + c*sin(theta);
 
                     // theta is between 0 and 100 in Hough Array
@@ -126,7 +126,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
                     // 0 -> 100
                     // we calculate the scaled value as
                     // new value = (old_val - old_min)/(old_max - old_min) * new_max
-                    HA_rho = (uint8_t)((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*100;
+                    HA_rho = (p + HA_rho_min)/(HA_rho_max + HA_rho_min)*100;
 
                     //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
                     HA[HA_rho][HA_theta]++;
