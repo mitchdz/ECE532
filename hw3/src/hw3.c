@@ -125,7 +125,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
 
                     // theta is between 0 and 100 in Hough Array
                     // theta value will be theta*99/M_PI
-                    HA_theta = (uint8_t)(theta*99/M_PI);
+                    HA_theta = theta*99/M_PI;
 
                     // rho will be between 0 and 100 in the hough array,
                     // but the rho values can be between -N and Nsqrt(2)
