@@ -1,4 +1,3 @@
-//#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "pngio.h"
@@ -39,8 +38,8 @@ void analyzeImage()
     pngReadHdr(pngfile, &n_rows, &n_cols);
     printf("image is %d rows by %d cols\n", n_rows, n_cols);
 
-    uint8_t  **png_raw =    matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
-    int32_t **HA = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(int32_t));
+    uint8_t **png_raw = matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
+    int32_t **HA      = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(int32_t));
 
     //store entire image into memory
     for (r = 0; r < n_rows; r++) pngReadRow(pngfile, png_raw[r]);
@@ -50,7 +49,7 @@ void analyzeImage()
     //scale HoughArray
     for (r = 0; r < HOUGH_ROWS; r++) {
         for (c  = 0; c < HOUGH_COLS; c++) {
-            if (HA[r][c] > 255) HA[r][c] = 255;
+            //if (HA[r][c] > 255) HA[r][c] = 255;
         }
     }
 
@@ -95,29 +94,46 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
      *     end
      * end
      */
-    int32_t r, c, p, theta;
+
+    // we are doing 1) (b)
+    // -pi/2 <= theta < pi
+    // -n_rows <= p <= sqrt(r^2 + c^2)
+    //
+    int HA_rho_min = n_rows;
+    int HA_rho_max = (int)sqrt(pow(n_rows,2)+pow(n_cols,2));
+
+    int32_t r, c;
+    int8_t HA_theta, HA_rho;
+    double theta, p;
     bool valid_edge;
     #pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
     for (r = 0; r < n_rows; r++) {
         for (c = 0; c < n_cols; c++) {
             valid_edge = (edge_map[r][c] == 255) ? true : false;
             if (valid_edge) {
-                for (theta = -M_PI/2; theta <= M_PI; theta++) {
+                for (theta = 0; theta < M_PI; theta += (double)(M_PI/100)) {
                     p = r*cos(theta) + c*sin(theta);
 
-                    if ( p >= 100) p = 99;
-                    if (p < 0) p = 0;
+                    // theta is between 0 and 100 in Hough Array
+                    // theta value will be theta*100/M_PI
+                    HA_theta = (int8_t)(theta*100/M_PI);
 
-                    if (theta < 0) theta = 0;
+                    // rho will be between 0 and 100 in the hough array,
+                    // but the rho values can be between -N and Nsqrt(2)
+                    // so in the case of the provided edge map we map
+                    // -256 -> 352
+                    // to
+                    // 0 -> 100
+                    // we calculate the scaled value as
+                    // new value = (old_val - old_min)/(old_max - old_min) * new_max
+                    HA_rho = (int)((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*100;
 
-
-                    printf("r:%d\tc:%d\ttheta: %d\tp:%d\n", r, c, theta, p);
-                    HA[p][theta]++;
+                    //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
+                    HA[HA_rho][HA_theta]++;
                 }
             }
         }
     }
     return;
 }
-
 
