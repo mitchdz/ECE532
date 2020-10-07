@@ -10,6 +10,25 @@
 #define OUTPUT_HOUGH_ARRAY "out/HoughArray.png"
 #define OUTPUT_HOUGH_LINES "out/HoughLines.png"
 
+enum _hw3_error
+{
+    E_SUCCESS = 0,
+    E_NO_NODES = -1,
+};
+
+typedef enum _hw3_error error_t;
+
+struct _errordesc{
+    int code;
+    char *message;
+} errordesc[] = {
+    { E_SUCCESS, "No error" },
+    { E_NO_NODES, "No nodes in linked list" },
+};
+
+
+
+
 typedef struct HoughPeakNode {
     double theta;
     double rho;
@@ -54,3 +73,9 @@ void analyzeImage();
 void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
         int32_t **HA);
 void writePNG(uint8_t** raw_data, char* filename, int n_rows, int n_cols);
+
+void printHoughPeak(double m, double b, double rho, double theta);
+enum _hw3_error printHoughPeaks(HoughPeakNode* head);
+
+
+

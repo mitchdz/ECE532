@@ -80,12 +80,7 @@ void analyzeImage()
     // write detected Hough Peaks to file
     writePNG(HAout, OUTPUT_HOUGH_PEAKS, HOUGH_ROWS, HOUGH_COLS);
 
-    // Convert Hough Peaks in rho/theta to lines in cartesian
-    for (r = 0; r < n_rows; r++)
-        for (c  = 0; c < n_cols; c++)
-            HAlines[r][c] = 0;
-
-    // create head of singly linked list
+    // Determine Hough Peaks
     HoughPeakNode* head = (HoughPeakNode*)malloc(sizeof(HoughPeakNode));
     // We can compute the line in the image space by using
     // y =           m           * x +      b
@@ -112,10 +107,22 @@ void analyzeImage()
         }
     }
 
-    //TODO: write lines on HALines
+    // zero out HAlines pseudo 2D array
+    for (r = 0; r < n_rows; r++)
+        for (c  = 0; c < n_cols; c++)
+            HAlines[r][c] = 0;
 
     printf("There are %d Hough Peaks with a threshold of %d\n",
             getNumberHoughPeakNodes(head), threshold_value);
+
+    // print all hough peaks
+    printHoughPeaks(head);
+    //writeHoughLinesFromNode(HAlines, n_rows, n_cols, head);
+
+    // write Hough Lines to file
+    //writePNG(HAlines, OUTPUT_HOUGH_LINES, n_rows, n_cols);
+
+    //TODO: superimpose houghlines and input img
 
     printf("Writing Hough Array to %s\n", OUTPUT_HOUGH_ARRAY);
     printf("Writing Hough Peaks to %s\n", OUTPUT_HOUGH_PEAKS);
@@ -134,8 +141,24 @@ cleanup:
     return;
 }
 
+enum _hw3_error printHoughPeaks(HoughPeakNode* head)
+{
+    //make sure there are more nodes than head node
+    if (head->next == NULL) return E_NO_NODES;
+
+    while (head->next != NULL) {
+        head = head->next;
+        printHoughPeak(head->m, head->b, head->rho, head->theta);
+        if (head->next == NULL) break;
+    }
+    return E_SUCCESS;
+}
 
 
+void printHoughPeak(double m, double b, double rho, double theta)
+{
+    printf("rho:%lf\t theta:%lf\t m:%lf\t  b:%lf\n", rho, theta, m, b);
+}
 
 
 /* @brief performs Hough Transform using rho/theta parameterization on an
@@ -178,7 +201,7 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
     double theta, p;
     bool valid_edge;
     //pragma omp parallelizes the OUTER 2 loops w/ collapse(2) argument
-    #pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
+    //#pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
     for (r = 0; r < n_rows; r++) {
         for (c = 0; c < n_cols; c++) {
             //valid_edge checks if the pixel is an edge or not

@@ -4,7 +4,7 @@ LINKER=gcc
 LDFLAGS =-L$(BINDIR)
 LDLIBS =-ldip -lpng -lz -lm -fopenmp
 CC =gcc
-CFLAGS =-O2 -fopenmp -I$(LIBDIR) -I$(SRCDIR) #-g -Wall
+CFLAGS =-g -Wall -fopenmp -I$(LIBDIR) -I$(SRCDIR) #-O2
 
 SRCDIR =src
 OBJDIR =obj
