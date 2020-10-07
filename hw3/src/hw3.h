@@ -6,7 +6,7 @@
 #define HOUGH_COLS 100
 
 #define INPUT_PICTURE "input/edges.png"
-#define OUTPUT_PICTURE "out/HoughPeaks.png"
+#define OUTPUT_HOUGH_PEAKS "out/HoughPeaks.png"
 #define OUTPUT_HOUGH_ARRAY "out/HoughArray.png"
 #define OUTPUT_HOUGH_LINES "out/HoughLines.png"
 

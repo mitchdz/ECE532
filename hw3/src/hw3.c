@@ -78,7 +78,7 @@ void analyzeImage()
             HAout[r][c] = (HAout[r][c] < threshold_value) ? 0 : HAout[r][c];
 
     // write detected Hough Peaks to file
-    writePNG(HAout, OUTPUT_HOUGH_ARRAY, HOUGH_ROWS, HOUGH_COLS);
+    writePNG(HAout, OUTPUT_HOUGH_PEAKS, HOUGH_ROWS, HOUGH_COLS);
 
     // Convert Hough Peaks in rho/theta to lines in cartesian
     for (r = 0; r < n_rows; r++)
