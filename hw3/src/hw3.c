@@ -44,10 +44,10 @@ void analyzeImage()
     printf("image is %d rows by %d cols\n", n_rows, n_cols);
 
     //initial pseudo 2D arrays
-    uint8_t **png_raw   = matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
-    int32_t **HA        = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(int32_t));
-    uint8_t **HAout     = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(uint8_t));
-    uint8_t **HAlines   = matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
+    uint8_t **png_raw = matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
+    int32_t **HA      = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(int32_t));
+    uint8_t **HAout   = matalloc(HOUGH_ROWS, HOUGH_COLS, 0, 0, sizeof(uint8_t));
+    uint8_t **HAlines = matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
 
     //store entire image into memory
     for (r = 0; r < n_rows; r++) pngReadRow(pngfile, png_raw[r]);
@@ -114,10 +114,14 @@ void analyzeImage()
 
     //TODO: write lines on HALines
 
-
-
     printf("There are %d Hough Peaks with a threshold of %d\n",
             getNumberHoughPeakNodes(head), threshold_value);
+
+    printf("Writing Hough Array to %s\n", OUTPUT_HOUGH_ARRAY);
+    printf("Writing Hough Peaks to %s\n", OUTPUT_HOUGH_PEAKS);
+    printf("TODO: Writing Hough Lines to %s\n", OUTPUT_HOUGH_LINES);
+
+    printf("TODO: superimpose hough lines with %s\n", INPUT_PICTURE);
 
     goto cleanup;
 cleanup:
@@ -161,9 +165,11 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
      */
 
     // we are doing 1) (b)
-    // -pi/2 <= theta < pi
+    // 0 <= theta < pi
     // -n_rows <= p <= sqrt(r^2 + c^2)
-    //
+
+    //setting N to n_cols seems good enough.
+    //future could be (n_rows+n_cols)/2
     int HA_rho_min = n_cols;
     int HA_rho_max = (int)sqrt(pow(n_rows,2)+pow(n_cols,2));
 
@@ -178,27 +184,27 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
             //valid_edge checks if the pixel is an edge or not
             valid_edge = (edge_map[r][c] > 100) ? true : false;
             if (valid_edge) {
-                for (theta = 0; theta < M_PI; theta += M_PI/99) {
-                    //classic rho algorithm
-                    p = r*cos(theta) + c*sin(theta);
+             for (theta = 0; theta < M_PI; theta += M_PI/99) {
+              //classic rho algorithm
+              p = r*cos(theta) + c*sin(theta);
 
-                    // theta is between 0 and 99 in Hough Array
-                    // theta value will be theta*99/M_PI
-                    HA_theta = round(theta*99/M_PI);
+              // theta is between 0 and 99 in Hough Array
+              // theta value will be theta*99/M_PI
+              HA_theta = round(theta*99/M_PI);
 
-                    // rho will be between 0 and 100 in the hough array,
-                    // but the rho values can be between -N and Nsqrt(2)
-                    // so in the case of the provided edge map we map
-                    // -256 -> 352
-                    // to
-                    // 0 -> 99
-                    // we calculate the scaled value as
-                    // new value = (old_val - old_min)/(old_max - old_min) * new_max
-                    HA_rho = round(((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*99);
+              // rho will be between 0 and 100 in the hough array,
+              // but the rho values can be between -N and Nsqrt(2)
+              // so in the case of the provided edge map we map
+              // -256 -> 352
+              // to
+              // 0 -> 99
+              // we calculate the scaled value as
+              // new value = (old_val - old_min)/(old_max - old_min) * new_max
+              HA_rho = round(((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*99);
 
-                    //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
-                    HA[HA_rho][HA_theta]++;
-                }
+              //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
+              HA[HA_rho][HA_theta]++;
+             }
             }
         }
     }
