@@ -1,0 +1,32 @@
+* the significant lines that should be kept is 5 because the main image is 
+clearly a pentagon.
+* I did example 1(b) with a threshold of 243
+
+you can run the program by typing `make run` from the main directory. Here is example output:
+
+$ make run
+mkdir -p obj
+mkdir -p bin
+mkdir -p out
+ar rc bin/libdip.a obj/pngReadRow.o obj/error.o obj/pngClose.o obj/pngWriteRow.o obj/pngWriteHdr.o obj/padarray.o obj/matfree.o obj/pngOpen.o obj/matalloc.o obj/pngReadHdr.o obj/pngErrorHandler.o obj/hw3.o obj/pngWarningHandler.o obj/timediff.o
+gcc obj/hw3.o -Lbin -ldip -lpng -lz -lm -fopenmp -o bin/hw3
+mkdir -p obj
+mkdir -p bin
+./bin/hw3
+image is 243 rows by 256 cols
+There are 5 Hough Peaks with a threshold of 225
+
+Hough Peaks:
+rho:26.0	 theta:-1.54	 intensity:226, m:0.03	  b:-26.012836
+rho:58.0	 theta:-0.06	 intensity:243, m:15.89	  b:-923.706324
+rho:70.0	 theta:-0.06	 intensity:228, m:15.89	  b:-1114.817978
+rho:71.0	 theta:0.00	 intensity:245, m:-inf	  b:71.000000
+rho:72.0	 theta:0.06	 intensity:255, m:-15.89	  b:1146.669920
+
+Hough lines as equations:
+y=-26.012836
+y=15.894545x+-923.706324
+y=15.894545x+-1114.817978
+x=71.000000
+y=-15.894545x+1146.669920
+
