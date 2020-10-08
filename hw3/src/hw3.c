@@ -13,7 +13,11 @@
 #include <float.h>
 #include <math.h>
 
-uint8_t threshold_value = 225;
+#define HOUGH_ROWS 100
+#define HOUGH_COLS 91
+
+//uint8_t threshold_value = 225;
+uint8_t threshold_value = 210;
 
 int main(int argc,char* argv[]) {
     if (argc==1) {
@@ -37,7 +41,6 @@ void writePNG(uint8_t** raw_data, char* filename, int n_rows, int n_cols)
 void analyzeImage()
 {
     int32_t c, r, n_cols, n_rows;
-
     //initialize input picture
     PNGFILE *pngfile = pngOpen(INPUT_PICTURE, "r");
     pngReadHdr(pngfile, &n_rows, &n_cols);
@@ -80,32 +83,9 @@ void analyzeImage()
     // write detected Hough Peaks to file
     writePNG(HAout, OUTPUT_HOUGH_PEAKS, HOUGH_ROWS, HOUGH_COLS);
 
-    // Determine Hough Peaks
+    // organize hough peaks into list
     HoughPeakNode* head = (HoughPeakNode*)malloc(sizeof(HoughPeakNode));
-    // We can compute the line in the image space by using
-    // y =           m           * x +      b
-    // y = -cos(theta)/sin(theta)* x + p/sin(theta)
-    double m, b, rho, theta;
-    for (r = 0; r < HOUGH_ROWS; r++) {
-        for (c  = 0; c < HOUGH_COLS; c++) {
-            if (HAout[r][c] >= threshold_value) {
-                rho = r;
-                theta = c;
-
-                m = (-cos(theta)/sin(theta));
-                b = rho/sin(theta);
-                HoughPeakNode* node = \
-                                (HoughPeakNode*)malloc(sizeof(HoughPeakNode));
-                node->theta = theta;
-                node->rho = rho;
-                node->m = m;
-                node->b = b;
-                node->next = NULL;
-
-                appendHoughPeakNode(head, node);
-            }
-        }
-    }
+    populateHoughPeaksList(HAout, head);
 
     // zero out HAlines pseudo 2D array
     for (r = 0; r < n_rows; r++)
@@ -116,7 +96,13 @@ void analyzeImage()
             getNumberHoughPeakNodes(head), threshold_value);
 
     // print all hough peaks
+    printf("\n");
+    printf("Hough Peaks:\n");
     printHoughPeaks(head);
+    printf("\n");
+    printf("Hough lines as equations:\n");
+    printHoughLineEquations(head);
+    printf("\n");
     //writeHoughLinesFromNode(HAlines, n_rows, n_cols, head);
 
     // write Hough Lines to file
@@ -126,9 +112,9 @@ void analyzeImage()
 
     printf("Writing Hough Array to %s\n", OUTPUT_HOUGH_ARRAY);
     printf("Writing Hough Peaks to %s\n", OUTPUT_HOUGH_PEAKS);
-    printf("TODO: Writing Hough Lines to %s\n", OUTPUT_HOUGH_LINES);
+    //printf("TODO: Writing Hough Lines to %s\n", OUTPUT_HOUGH_LINES);
 
-    printf("TODO: superimpose hough lines with %s\n", INPUT_PICTURE);
+    //printf("TODO: superimpose hough lines with %s\n", INPUT_PICTURE);
 
     goto cleanup;
 cleanup:
@@ -141,6 +127,49 @@ cleanup:
     return;
 }
 
+/* @brief populateHoughPeaksList takes a Hough Array
+ * which is a pseudo 2-D uint8_t array created by matalloc
+ * which is returned from HTStraightLine
+ *
+ * @param HA pseudo 2-D uint8_t Hough Array
+ * @param head head to HoughPeakNode list
+ */
+
+void populateHoughPeaksList(uint8_t** HA, HoughPeakNode* head)
+{
+    // We can compute the line in the image space by using
+    // y =           m           * x +      b
+    // y = -cos(theta)/sin(theta)* x + p/sin(theta)
+    double m, b, rho, theta;
+    for (int r = 0; r < HOUGH_ROWS; r++) {
+        for (int c  = 0; c < HOUGH_COLS; c++) {
+            if (HA[r][c] >= threshold_value) {
+                rho = r;
+                theta = c*M_PI/99;
+
+                // m will just equal -infinity if theta=0
+                // and we don't care about the slope in that case anyways
+                if (theta == 0) b = rho;
+                else            b = rho/sin(theta);
+
+                m = (-cos(theta)/sin(theta));
+
+
+                HoughPeakNode* node = \
+                                (HoughPeakNode*)malloc(sizeof(HoughPeakNode));
+                node->intensity = HA[r][c];
+                node->theta = theta;
+                node->rho = rho;
+                node->m = m;
+                node->b = b;
+                node->next = NULL;
+
+                appendHoughPeakNode(head, node);
+            }
+        }
+    }
+}
+
 enum _hw3_error printHoughPeaks(HoughPeakNode* head)
 {
     //make sure there are more nodes than head node
@@ -148,16 +177,68 @@ enum _hw3_error printHoughPeaks(HoughPeakNode* head)
 
     while (head->next != NULL) {
         head = head->next;
-        printHoughPeak(head->m, head->b, head->rho, head->theta);
+        printHoughPeak(head->m, head->b, head->rho, head->theta, head->intensity);
         if (head->next == NULL) break;
     }
     return E_SUCCESS;
 }
 
-
-void printHoughPeak(double m, double b, double rho, double theta)
+enum _hw3_error printHoughLineEquations(HoughPeakNode* head)
 {
-    printf("rho:%lf\t theta:%lf\t m:%lf\t  b:%lf\n", rho, theta, m, b);
+    //make sure there are more nodes than head node
+    if (head->next == NULL) return E_NO_NODES;
+
+    while (head->next != NULL) {
+        head = head->next;
+        printHoughLineEquation(head->m, head->b);
+        if (head->next == NULL) break;
+    }
+    return E_SUCCESS;
+}
+
+void printHoughPeak(double m, double b, double rho, double theta, uint8_t intensity)
+{
+    printf("rho:%.1lf\t theta:%.2lf\t intensity:%d, m:%.2lf\t  b:%lf\n", rho, theta, intensity, m, b);
+}
+
+
+void printHoughLineEquation(double m, double b)
+{
+    if (m == -1.0/0.0)
+        printf("x=%lf\n",b);
+    else
+        printf("y=%lfx+%lf\n", m, b);
+
+}
+
+
+void drawLineFromSlopeAndIntercept(uint8_t **HAlines, double m, double b)
+{
+    //TODO: find x1 and y1
+}
+
+// Bresenham's line drawing algorithm
+void drawLine(uint8_t **HAlines, int x0, int y0, int x1, int y1)
+{
+    int dx, dy, p, x, y;
+    dx=x1-x0; dy=y1-y0;
+    x=x0; y=y0; p=2*dy-dx;
+
+    while(x<x1)
+    {
+        if(p>=0)
+        {
+            HAlines[x][y] = 255;
+            y=y+1;
+            p=p+2*dy-2*dx;
+        }
+        else
+        {
+            HAlines[x][y] = 255;
+            p=p+2*dy;
+        }
+        x=x+1;
+    }
 }
 
 
@@ -193,27 +274,26 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
 
     //setting N to n_cols seems good enough.
     //future could be (n_rows+n_cols)/2
-    int HA_rho_min = n_cols;
+    //int HA_rho_min = n_cols;
+    //int HA_rho_min = (n_cols+n_rows)/2;
     int HA_rho_max = (int)sqrt(pow(n_rows,2)+pow(n_cols,2));
+    int HA_rho_min = -HA_rho_max;
 
     int32_t r, c;
-    int8_t HA_theta, HA_rho;
+    int8_t HA_rho;
     double theta, p;
     bool valid_edge;
     //pragma omp parallelizes the OUTER 2 loops w/ collapse(2) argument
     //#pragma omp parallel for private(r, c, p, theta) shared(HA) collapse(2)
-    for (r = 0; r < n_rows; r++) {
+    for (r = n_rows-1; r >0; r--) {
         for (c = 0; c < n_cols; c++) {
             //valid_edge checks if the pixel is an edge or not
             valid_edge = (edge_map[r][c] > 100) ? true : false;
             if (valid_edge) {
-             for (theta = 0; theta < M_PI; theta += M_PI/99) {
+             int theta_counter=0;
+             for (theta = -M_PI/2; theta < M_PI/2; theta += M_PI/100) {
               //classic rho algorithm
-              p = r*cos(theta) + c*sin(theta);
-
-              // theta is between 0 and 99 in Hough Array
-              // theta value will be theta*99/M_PI
-              HA_theta = round(theta*99/M_PI);
+              p = (double)r*cos(theta) + (double)c*sin(theta);
 
               // rho will be between 0 and 100 in the hough array,
               // but the rho values can be between -N and Nsqrt(2)
@@ -223,10 +303,11 @@ void HTStraightLine(uint8_t **edge_map, int32_t n_rows, int32_t n_cols,
               // 0 -> 99
               // we calculate the scaled value as
               // new value = (old_val - old_min)/(old_max - old_min) * new_max
-              HA_rho = round(((p + HA_rho_min)/(HA_rho_max + HA_rho_min))*99);
+              HA_rho = (double)round(((p - (double)HA_rho_min)/((double)HA_rho_max - (double)HA_rho_min))*100.0);
 
               //printf("r:%d\tc:%d\ttheta: %lf\tp:%lf\n", r, c, theta, p);
-              HA[HA_rho][HA_theta]++;
+              HA[HA_rho][theta_counter]++;
+              theta_counter++;
              }
             }
         }
