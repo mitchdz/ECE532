@@ -2,7 +2,6 @@
 ## Requirements
 This program was built on Ubuntu 20.04 using GNU Makefile.
 
-
 ## How to Build and Run
 To build and run the program simply invoke
 
