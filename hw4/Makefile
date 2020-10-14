@@ -39,6 +39,9 @@ $(BUILD)/libdip.a: $(OBJECTS)
 run: all
 	./$(BINDIR)/$(PROGNAME) $(INPUT_FILE) $(OUTPUT_FILE)
 
+.PHONY: graybook
+graybook: all
+	./$(BINDIR)/$(PROGNAME) input/graybook.png $(OUTDIR)/graybook_thresh.png
 .PHONY: create_dirs
 create_dirs:
 	mkdir -p $(OBJDIR)
