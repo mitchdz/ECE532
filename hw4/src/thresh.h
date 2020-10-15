@@ -14,6 +14,8 @@ enum _hw4_error
     E_SUCCESS,
     E_FILE_NOT_FOUND,
     E_GENERIC_ERROR,
+    E_ARRAY_SIZE_MISMATCH,
+    E_NOT_IMPLEMENTED,
 };
 
 typedef enum _hw4_error error_t;
@@ -26,6 +28,8 @@ struct _errordesc{
     { E_SUCCESS,  (char *)"No error" },
     { E_FILE_NOT_FOUND, (char *)"File not found" },
     { E_GENERIC_ERROR,  (char *)"Generic Error" },
+    { E_ARRAY_SIZE_MISMATCH,  (char *)"Array sizes do not match" },
+    { E_NOT_IMPLEMENTED,  (char *)"Not implemented yet" },
 };
 
 void printError(error_t E, char *msg)
@@ -56,7 +60,15 @@ error_t zeroPsuedo2DArray(void** array, int32_t n_rows, int32_t n_cols,
  * @param t index of histogram
  * @return double
  */
-double KittlerP(uint8_t *h, int t) {return  h[t] / (sizeof(*h) / sizeof(h[0]));}
+double KittlerP(uint8_t *h, int t) {
+    uint8_t hval = h[t];
+    size_t numPixels = sizeof(*h) / sizeof(h[0]);
+
+    printf("KittlerP <= hval/numPixels t: %d \thval: %d \tnumPixels: %lu\n", t, hval, numPixels);
+    double P = ((double)hval / (double)numPixels);
+
+    return P;
+}
 
 /* @brief Kittler q1
  *       t
@@ -68,8 +80,12 @@ double KittlerP(uint8_t *h, int t) {return  h[t] / (sizeof(*h) / sizeof(h[0]));}
  */
 double Kittlerq1(uint8_t *h, int t)
 {
-    double sum = 0;
-    for (int i = 0; i <= t; i++) sum += KittlerP(h, t);
+    double sum = 0, P;
+
+    P = KittlerP(h, t);
+
+    for (int i = 0; i <= t; i++) sum += P;
+
     return sum;
 }
 
@@ -93,8 +109,14 @@ double Kittlerq2(uint8_t *h, int t) { return 1.0 - Kittlerq1(h, t); }
  */
 double Kittleru1(uint8_t *h, int t)
 {
-    double sum = 0;
-    for (int i = 0; i <= t; i++) sum += i*(KittlerP(h,t))/Kittlerq1(h,t);
+    double sum = 0, P, q1;
+
+    P = KittlerP(h,t);
+    q1 = Kittlerq1(h,t);
+
+    for (int i = 0; i <= t; i++) {
+        sum += (i*P)/q1;
+    }
     return sum;
 }
 
@@ -108,14 +130,20 @@ double Kittleru1(uint8_t *h, int t)
  */
 double Kittleru2(uint8_t *h, int t)
 {
-    double sum = 0;
-    for (int i = t + 1; i <= 255; i++) sum += i*(KittlerP(h,t))/Kittlerq2(h,t);
+    double sum = 0, P, q2;
+
+    P  = KittlerP(h,t);
+    q2 = Kittlerq2(h,t);
+
+    for (int i = t + 1; i <= 255; i++) {
+        sum += i*P/q2;
+    }
     return sum;
 }
 
 /* @brief Kittler var1
  *       t
- *  var1 = Σ ([i-u1(h,t)]^2 * P(h,t) * q1(h,t))
+ *  var1 = Σ ([i-u1(t)]^2 * P(t) * q1(t))
  *      i=0
  * @param h histogram created as a single uint8_t array
  * @param t index of histogram
@@ -123,9 +151,13 @@ double Kittleru2(uint8_t *h, int t)
  */
 double Kittlervar1(uint8_t *h, int t)
 {
-    double sum = 0;
-    for (int i = 0; i <= t; i++)
-        sum += pow(i-Kittleru1(h,t),2)*(KittlerP(h,t))/Kittlerq1(h,t);
+    double sum = 0, P, u1, q1;
+    P  = KittlerP(h,t);
+    u1 = Kittleru1(h,t);
+    q1 = Kittlerq1(h,t);
+    for (int i = 0; i <= t; i++) {
+        sum += pow(i-u1,2) * P * q1;
+    }
     return sum;
 }
 
@@ -139,9 +171,13 @@ double Kittlervar1(uint8_t *h, int t)
  */
 double Kittlervar2(uint8_t *h, int t)
 {
-    double sum = 0;
-    for (int i = t + 1; i <= 255; i++)
-        sum += pow(i-Kittleru2(h,t),2)*(KittlerP(h,t))/Kittlerq2(h,t);
+    double sum = 0, u2, P, q2;
+    P  = KittlerP(h,t);
+    u2 = Kittleru2(h,t);
+    q2 = Kittlerq2(h,t);
+    for (int i = t + 1; i <= 255; i++) {
+        sum += pow(i-u2,2)*(P) * q2;
+    }
     return sum;
 }
 
@@ -155,12 +191,25 @@ double Kittlervar2(uint8_t *h, int t)
  */
 double Kittlerf(uint8_t *h, int t)
 {
-    double g1 = Kittlerq1(h,t)/( Kittlervar1(h,t)*sqrt(2*M_PI) ) *
-        pow( M_E, -1.0 * pow( (t-Kittleru1(h,t)),2)/(2*Kittlervar1(h,t) ) );
+    double q1   = Kittlerq1(h,t);
+    double var1 = Kittlervar1(h,t);
+    double u1   = Kittleru1(h,t);
 
-    double g2 = Kittlerq2(h,t)/( Kittlervar2(h,t)*sqrt(2*M_PI) ) *
-        pow( M_E, -1.0 * pow( (t-Kittleru2(h,t)),2)/(2*Kittlervar2(h,t) ) );
+    printf("q1:%lf \tvar1:%lf \tu1:%lf\n",q1, var1, u1);
 
+    double g1 = q1/( var1*sqrt(2*M_PI) ) *
+        pow( M_E, -1.0 * pow( (t-u1),2)/(2*var1 ) );
+
+    double q2   = Kittlerq2(h,t);
+    double var2 = Kittlervar2(h,t);
+    double u2   = Kittleru2(h,t);
+
+    printf("q2:%lf \tvar2:%lf \tu2:%lf\n",q2, var2, u2);
+
+    double g2 = q2/( var2*sqrt(2*M_PI) ) *
+        pow( M_E, -1.0 * pow( (t-u2),2)/(2*var2) );
+
+    //printf("g1: %lf, g2:%lf\n",g1,g2);
     return g1 + g2;
 
 }
@@ -178,9 +227,10 @@ error_t convert2DPseudoArrayToHistogram(uint8_t **grayscale, int32_t n_rows,
         int32_t n_cols, uint8_t *Histogram)
 {
     uint8_t histogram[n_rows * n_cols];
-    int i, j, k =0 ;
+    int i, j, k = 0;
     for (i=0;i<n_rows;i++) {
         for (j=0;j<n_cols;j++) {
+            //printf("grayscale[%d][%d]: %d\n", i, j, grayscale[i][j]);
             histogram[k] = grayscale[i][j];
             k++;
         }
@@ -189,13 +239,10 @@ error_t convert2DPseudoArrayToHistogram(uint8_t **grayscale, int32_t n_rows,
     return E_SUCCESS;
 }
 
-convertHistogramToPseudo2DArray(uint8_t *Histogram, in32_t n_rows,
+error_t convertHistogramToPseudo2DArray(uint8_t *Histogram, int32_t n_rows,
         int32_t n_cols, uint8_t **out)
 {
-
-
-
-
+    return E_NOT_IMPLEMENTED;
 }
 
 
@@ -204,11 +251,11 @@ convertHistogramToPseudo2DArray(uint8_t *Histogram, in32_t n_rows,
 /* @brief Kittler and Illingworth method to determine optimal threshold value
  *
  * @param histogram as pointer to a uint8_t array
- * @param thresh pointer to int8_t that threshold value should be stored into
+ * @param thresh pointer to int that threshold value should be stored into
  *
  * @return error_t
  */
-error_t KittlerIllingworthThresholding(uint8_t *histogram, int8_t *thresh);
+error_t KittlerIllingworthThresholding(uint8_t *histogram, int *thresh);
 
 
 /* @brief Recursive Update Formula, this is the formula that determines
@@ -219,7 +266,7 @@ error_t KittlerIllingworthThresholding(uint8_t *histogram, int8_t *thresh);
  *
  * @return error_t
  */
-error_t RecursiveUpdateFormula(uint8_t *h, int32_t t);
+error_t RecursiveUpdateFormula(uint8_t *h, int32_t t, double *Hvalues);
 
 
 /* @brief zeros a psuedo 2D array created by matalloc
@@ -263,5 +310,112 @@ void writePNG(uint8_t** raw_data, char* filename, int n_rows, int n_cols)
     pngWriteHdr(output_png, n_rows, n_cols);
     for (int r = 0; r < n_rows; r++) pngWriteRow(output_png, raw_data[r]);
     free(output_png);
+}
+
+
+double Rq1(uint8_t *h, int8_t t)
+{
+    //q1(0) = P(0)
+    if ( t == 0 ) return KittlerP(h, 0);
+
+    //q1(t) = q1(t-1) + P(t)
+    return Rq1(h, t-1) + KittlerP(h,t);
+}
+
+double Rq2(uint8_t *h, int8_t t)
+{
+    //q2(t) = 1 - q1(t)
+    return (1 - Rq1(h,t));
+}
+
+double Ru1(uint8_t *h, int8_t t)
+{
+    // u1(0) = 0
+    if ( t == 0 ) return 0;
+
+    double q1prev = Rq1(h,t-1);
+    double u1prev = Ru1(h,t-1);
+    double P = KittlerP(h,t);
+    double q1 = Rq1(h,t);
+
+    // u1(t) = (q1(t-1)*u1(t-1) + t*P(t) )/ q1(t)
+    return (q1prev*u1prev + t*P)/q1;
+}
+
+//      255
+//  u =  Σ i*P(h,t)
+//      i=0
+double Ru(uint8_t *h, int t)
+{
+    double sum = 0, P;
+
+    P = KittlerP(h, t);
+
+    for (int i = 0; i <= 255; i++) sum += i*P;
+
+    return sum;
+}
+
+double Ru2(uint8_t *h, int t)
+{
+    double u = Ru(h,t);
+    double q1 = Rq1(h,t);
+    double q2 = Rq2(h,t);
+    double u1 = Ru1(h,t);
+
+    double Ru2 = 0;
+    // u2(0) = u/q2(0)
+    // u2(t) = (u-q1(t)u1(t))/q2(t)
+    if (t == 0) { Ru2 = u/q2; }
+    else { Ru2 = (u-q1*u1)/q2; }
+
+    return Ru2;
+}
+
+double Rvar2(uint8_t *h, int t)
+{
+    int i=0;
+    double sum=0, var2=0;
+
+    double u2       = Ru2(h,t);
+    double P        = KittlerP(h,t);
+    double q2       = Rq2(h,t);
+    double q2prev   = Rq2(h,t-1);
+    double var2prev = Rvar2(h,t-1);
+    double u2prev   = Ru2(h,t-1);
+
+    //         255
+    //  var2(0) = Σ [i - u2(0)]^2 * P(i)/q2(0)
+    //         i=1
+    if ( t == 0 ) {
+        sum = 0;
+        for (i = 1; i <= 255; i++) {
+            sum += (pow(i-u2,2) * P/q2);
+        }
+        return sum;
+    }
+
+    // var2(t) = (1/q2) * (q2prev
+    //           {var2prev + [u2prev - u2]^2}
+    //           - P(t)*[t-u2prev]^2)
+    var2 = (1.0/q2)*(q2prev*(var2prev+pow(-u2,2)) - P*pow(t-u2,2));
+    return var2;
+}
+
+double Rvar1(uint8_t *h, int t)
+{
+    double var1 = 0;
+    double u1       = Ru1(h,t);
+    double P        = KittlerP(h,t);
+    double q1       = Rq1(h,t);
+    double q1prev   = Rq1(h,t-1);
+    double var1prev = Rvar1(h,t-1);
+    double u1prev   = Ru1(h,t-1);
+
+    //var1(0) = 0
+    if ( t == 0) return 0;
+
+    var1 = (1.0/q1)*(q1prev*(var1prev+pow(-u1,2)) - P*pow(t-u1,2));
+    return var1;
 }
 

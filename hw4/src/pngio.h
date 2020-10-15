@@ -33,7 +33,7 @@ extern void pngWriteHdr(PNGFILE *fp, int nrows, int ncols);
 extern void pngReadRow(PNGFILE *fp, uint8_t *prow);
 extern void pngWriteRow(PNGFILE *fp, uint8_t *prow);
 extern void pngClose(PNGFILE *fp);
-extern void pngErrorHandler(png_const_charp msg);
+extern void pngErrorHandler(png_structp png_ptr, png_const_charp msg);
 extern void pngWarningHandler(png_structp png_ptr, png_const_charp msg);
 
 #endif

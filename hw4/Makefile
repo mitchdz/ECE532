@@ -1,3 +1,7 @@
+# Usage:
+# make run          <- run program
+# make debug        <- debug program
+# make submission   <- auto generate submission folder
 PROGNAME = thresh
 INPUT_FILE = input/address.png
 OUTPUT_FILE = out/address_threshold.png
@@ -6,7 +10,8 @@ LINKER=gcc
 LDFLAGS =-L$(BINDIR)
 LDLIBS =-ldip -lpng -lz -lm -fopenmp
 CC =gcc
-CFLAGS =-g -Wall -fopenmp -I$(LIBDIR) -I$(SRCDIR) #-O2
+CFLAGS =-fopenmp -I$(LIBDIR) -I$(SRCDIR)
+CFLAGS += -DDEBUG -g -Wall
 
 SUBMISSIONDIR =submission
 OUTDIR =out
@@ -36,7 +41,7 @@ $(BUILD)/libdip.a: $(OBJECTS)
 	ar rc $(BINDIR)/libdip.a $(LIBDIP_OBJECTS)
 
 .PHONY: run
-run: all
+run: clean all
 	./$(BINDIR)/$(PROGNAME) $(INPUT_FILE) $(OUTPUT_FILE)
 
 .PHONY: graybook
