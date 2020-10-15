@@ -9,7 +9,7 @@
 
 #include "pngio.h"
 
-void pngErrorHandler(png_structp png_ptr, png_const_charp msg)
+void pngErrorHandler(png_const_charp msg)
 {
   if(progname == NULL)
     fprintf(stderr, "libpng: %s\n", msg);
