@@ -1,13 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "pngio.h"
-#include "pngOpen.c"
-#include "pngReadHdr.c"
-#include "pngErrorHandler.c"
 #include "thresh.h"
-#include "matfree.c"
-#include "pngReadRow.c"
-#include "padarray.c"
 #include <limits.h>
 #include <stdbool.h>
 #include <float.h>
@@ -17,6 +10,19 @@ int threshold_value = -1; // user defined or Kittler's method
 
 char INPUT_FILE[50];
 char OUTPUT_FILE[50];
+
+void printHelp()
+{
+    printf("call the program as\n");
+    printf("thresh [-t T] infile outfile\n");
+    printf("\n");
+    printf("T: optional user specified threshold 0 <= T <= 255;\n");
+    printf(" default: T is automatically computed using Kittler's method\n");
+    printf("\n");
+    printf("infile: the input grayscale image\n");
+    printf("\n");
+    printf("outfile: the output bi-level image\n");
+}
 
 int main(int argc,char* argv[]) {
     error_t error;
@@ -42,7 +48,7 @@ int main(int argc,char* argv[]) {
         error = analyzeImage();
     }
     else { //too many params
-        printf("Error: provide correct amount of inputs");
+        printf("Error: provide correct amount of inputs\n\n");
         printHelp();
         goto exit;
     }

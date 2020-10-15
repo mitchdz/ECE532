@@ -2,60 +2,75 @@
 # make run          <- run program
 # make debug        <- debug program
 # make submission   <- auto generate submission folder
+
+################################ VARIABLES #####################################
 PROGNAME = thresh
 INPUT_FILE = input/address.png
 OUTPUT_FILE = out/address_threshold.png
 
+################################ COMPILER ######################################
 LINKER=gcc
 LDFLAGS =-L$(BINDIR)
 LDLIBS =-ldip -lpng -lz -lm -fopenmp
 CC =gcc
-CFLAGS =-fopenmp -I$(LIBDIR) -I$(SRCDIR)
+CFLAGS = -U__STRICT_ANSI__ -fopenmp -I$(LIBDIR) -I$(SRCDIR)
 CFLAGS += -DDEBUG -g -Wall
-
+################################ DIRECTORIES ###################################
 SUBMISSIONDIR =submission
 OUTDIR =out
 SRCDIR =src
 OBJDIR =obj
 BINDIR =bin
 LIBDIR =/usr/lib
-
+################################ FILES #########################################
 SOURCES := $(wildcard $(SRCDIR)/*.c)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
-# LIBDIP_OBJECTS groups every source other than hw3.c and hw3.h
-LIBDIP_OBJECTS := $(filter-out $(PROGNAME)%.c, $(OBJECTS))
 
-.PHONY: all
-all: create_dirs $(BINDIR)/$(PROGNAME)
-	mkdir -p $(OBJDIR)
-	mkdir -p $(BINDIR)
+############################DEFAULT DIRECTIVE ##################################
+all: create_dirs libdip $(BINDIR)/$(PROGNAME)
+################################ LIBDIP ########################################
+LIBDIP_SRCDIR =libdipsrc
+LIBDIP_OBJDIR =libdipobj
+LIBDIP_SOURCES  := $(wildcard $(LIBDIP_SRCDIR)/*.c)
+LIBDIP_INCLUDES := $(wildcard $(LIBDIP_SRCDIR)/*.h)
+LIBDIP_OBJECTS  := $(LIBDIP_SOURCES:$(LIBDIP_SRCDIR)/%.c=$(LIBDIP_OBJDIR)/%.o)
 
-$(BINDIR)/$(PROGNAME): $(OBJECTS) $(BUILD)/libdip.a
-	$(LINKER) obj/$(PROGNAME).o $(LDFLAGS) $(LDLIBS) -o $@
+.PHONY: libdip
+libdip: $(BUILD)/libdip.a
 
-$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD)/libdip.a: $(OBJECTS)
+$(BUILD)/libdip.a: $(LIBDIP_OBJECTS)
 	ar rc $(BINDIR)/libdip.a $(LIBDIP_OBJECTS)
 
+$(LIBDIP_OBJECTS): $(LIBDIP_OBJDIR)/%.o : $(LIBDIP_SRCDIR)/%.c
+	$(CC) -I$(LIBDIP_SRCDIR) -c $< -o $@
+
+################################ THRESH ########################################
+$(BINDIR)/$(PROGNAME): $(OBJECTS) libdip
+	$(LINKER) $(OBJDIR)/$(PROGNAME).o $(LDFLAGS) $(LDLIBS) -o $@
+
+$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(SRCDIR)/%.h
+	$(CC) $(CFLAGS) -c $< -o $@
+################################ TARGETS #######################################
+
 .PHONY: run
-run: clean all
+run: all
 	./$(BINDIR)/$(PROGNAME) $(INPUT_FILE) $(OUTPUT_FILE)
 
 .PHONY: graybook
 graybook: all
 	./$(BINDIR)/$(PROGNAME) input/graybook.png $(OUTDIR)/graybook_thresh.png
+
 .PHONY: create_dirs
 create_dirs:
 	mkdir -p $(OBJDIR)
 	mkdir -p $(BINDIR)
+	mkdir -p $(LIBDIP_OBJDIR)
 	mkdir -p out
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR)
+	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR) $(LIBDIP_OBJDIR)
 
 .PHONY: submission
 submission: run

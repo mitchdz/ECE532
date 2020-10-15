@@ -1,7 +1,17 @@
-#pragma once
+#ifndef THRESH_H
+#define THRESH_H
+
 #include <stdint.h>
 #include <math.h>
-#include "pngio.h"
+#include <stdio.h>
+// include all of the libdip header and source files
+#include "../libdipsrc/pngio.h"
+#include "../libdipsrc/matfree.c"
+#include "../libdipsrc/pngReadRow.c"
+#include "../libdipsrc/padarray.c"
+#include "../libdipsrc/pngErrorHandler.c"
+#include "../libdipsrc/pngOpen.c"
+#include "../libdipsrc/pngReadHdr.c"
 
 typedef enum {
     UINT8_T,
@@ -37,18 +47,6 @@ void printError(error_t E, char *msg)
     printf("Error %d: %s %s\n", errordesc[E].code, errordesc[E].message ,msg);
 }
 
-void printHelp()
-{
-    printf("call the program as\n");
-    printf("thresh [-t T] infile outfile\n");
-    printf("\n");
-    printf("T: optional user specified threshold 0 <= T <= 255;\n");
-    printf(" default: T is automatically computed using Kittler's method\n");
-    printf("\n");
-    printf("infile: the input grayscale image\n");
-    printf("\n");
-    printf("outfile: the output bi-level image\n");
-}
 
 error_t analyzeImage();
 error_t zeroPsuedo2DArray(void** array, int32_t n_rows, int32_t n_cols,
@@ -62,10 +60,13 @@ error_t zeroPsuedo2DArray(void** array, int32_t n_rows, int32_t n_cols,
  */
 double KittlerP(uint8_t *h, int t) {
     uint8_t hval = h[t];
-    size_t numPixels = sizeof(*h) / sizeof(h[0]);
+    double sizeArray = (double)sizeof(*h);
+    double sizeElement = (double)sizeof(h[0]);
 
-    printf("KittlerP <= hval/numPixels t: %d \thval: %d \tnumPixels: %lu\n", t, hval, numPixels);
-    double P = ((double)hval / (double)numPixels);
+    double numPixels = round(sizeArray / sizeElement);
+
+    //printf("KittlerP <= hval/numPixels t: %d \thval: %d \tnumPixels: %lu\n", t, hval, numPixels);
+    double P = ((double)hval / numPixels);
 
     return P;
 }
@@ -195,7 +196,7 @@ double Kittlerf(uint8_t *h, int t)
     double var1 = Kittlervar1(h,t);
     double u1   = Kittleru1(h,t);
 
-    printf("q1:%lf \tvar1:%lf \tu1:%lf\n",q1, var1, u1);
+    //printf("Kittlerf q1:%lf \tvar1:%lf \tu1:%lf\n",q1, var1, u1);
 
     double g1 = q1/( var1*sqrt(2*M_PI) ) *
         pow( M_E, -1.0 * pow( (t-u1),2)/(2*var1 ) );
@@ -204,7 +205,7 @@ double Kittlerf(uint8_t *h, int t)
     double var2 = Kittlervar2(h,t);
     double u2   = Kittleru2(h,t);
 
-    printf("q2:%lf \tvar2:%lf \tu2:%lf\n",q2, var2, u2);
+    //printf("Kittlerf q2:%lf \tvar2:%lf \tu2:%lf\n",q2, var2, u2);
 
     double g2 = q2/( var2*sqrt(2*M_PI) ) *
         pow( M_E, -1.0 * pow( (t-u2),2)/(2*var2) );
@@ -419,3 +420,4 @@ double Rvar1(uint8_t *h, int t)
     return var1;
 }
 
+#endif // THRESH_H

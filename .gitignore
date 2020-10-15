@@ -1,7 +1,6 @@
 *.o
 *.a
 *.swp
-*.vscode/*
 hw3/obj/*
 hw3/bin/*
 hw3/out/*
