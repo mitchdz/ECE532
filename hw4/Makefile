@@ -10,7 +10,7 @@ OUTPUT_FILE = out/address_threshold.png
 
 ################################ COMPILER ######################################
 LINKER=gcc
-LDFLAGS =-L$(BINDIR)
+LDFLAGS =-Llibdip
 LDLIBS =-ldip -lpng -lz -lm -fopenmp
 CC =gcc
 CFLAGS = -U__STRICT_ANSI__ -fopenmp -I$(LIBDIR) -I$(SRCDIR)
@@ -29,29 +29,17 @@ OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 ############################DEFAULT DIRECTIVE ##################################
 all: create_dirs libdip $(BINDIR)/$(PROGNAME)
-################################ LIBDIP ########################################
-LIBDIP_SRCDIR =libdipsrc
-LIBDIP_OBJDIR =libdipobj
-LIBDIP_SOURCES  := $(wildcard $(LIBDIP_SRCDIR)/*.c)
-LIBDIP_INCLUDES := $(wildcard $(LIBDIP_SRCDIR)/*.h)
-LIBDIP_OBJECTS  := $(LIBDIP_SOURCES:$(LIBDIP_SRCDIR)/%.c=$(LIBDIP_OBJDIR)/%.o)
 
-.PHONY: libdip
-libdip: $(BUILD)/libdip.a
-
-$(BUILD)/libdip.a: $(LIBDIP_OBJECTS)
-	ar rc $(BINDIR)/libdip.a $(LIBDIP_OBJECTS)
-
-$(LIBDIP_OBJECTS): $(LIBDIP_OBJDIR)/%.o : $(LIBDIP_SRCDIR)/%.c
-	$(CC) -I$(LIBDIP_SRCDIR) -c $< -o $@
-
-################################ THRESH ########################################
 $(BINDIR)/$(PROGNAME): $(OBJECTS) libdip
 	$(LINKER) $(OBJDIR)/$(PROGNAME).o $(LDFLAGS) $(LDLIBS) -o $@
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(SRCDIR)/%.h
 	$(CC) $(CFLAGS) -c $< -o $@
 ################################ TARGETS #######################################
+
+.PHONY: libdip
+libdip:
+	$(MAKE) -C libdip
 
 .PHONY: run
 run: all
@@ -65,12 +53,11 @@ graybook: all
 create_dirs:
 	mkdir -p $(OBJDIR)
 	mkdir -p $(BINDIR)
-	mkdir -p $(LIBDIP_OBJDIR)
 	mkdir -p out
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR) $(LIBDIP_OBJDIR)
+	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR)
 
 .PHONY: submission
 submission: run

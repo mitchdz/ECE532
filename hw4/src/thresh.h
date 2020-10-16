@@ -5,13 +5,13 @@
 #include <math.h>
 #include <stdio.h>
 // include all of the libdip header and source files
-#include "../libdipsrc/pngio.h"
-#include "../libdipsrc/matfree.c"
-#include "../libdipsrc/pngReadRow.c"
-#include "../libdipsrc/padarray.c"
-#include "../libdipsrc/pngErrorHandler.c"
-#include "../libdipsrc/pngOpen.c"
-#include "../libdipsrc/pngReadHdr.c"
+#include "../libdip/src/pngio.h"
+#include "../libdip/src/matfree.c"
+#include "../libdip/src/pngReadRow.c"
+#include "../libdip/src/padarray.c"
+#include "../libdip/src/pngErrorHandler.c"
+#include "../libdip/src/pngOpen.c"
+#include "../libdip/src/pngReadHdr.c"
 
 typedef enum {
     UINT8_T,
@@ -60,7 +60,7 @@ error_t zeroPsuedo2DArray(void** array, int32_t n_rows, int32_t n_cols,
  */
 double KittlerP(uint8_t *h, int t) {
     uint8_t hval = h[t];
-    double sizeArray = (double)sizeof(*h);
+    double sizeArray = (double)sizeof(h);
     double sizeElement = (double)sizeof(h[0]);
 
     double numPixels = round(sizeArray / sizeElement);
