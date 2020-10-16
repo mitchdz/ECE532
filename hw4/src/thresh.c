@@ -1,6 +1,6 @@
+#include "thresh.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "thresh.h"
 #include <limits.h>
 #include <stdbool.h>
 #include <float.h>
@@ -71,10 +71,10 @@ error_t analyzeImage()
     uint8_t **grayscale = matalloc(n_rows, n_cols, 0, 0, sizeof(uint8_t));
     for (r = 0; r < n_rows; r++) pngReadRow(pngfile, grayscale[r]);
 
-    double Hvalues[n_rows*n_cols];
+    double Hvalues[256];
 
     // convert image to histogram
-    uint8_t Histogram[n_rows*n_cols];
+    uint8_t Histogram[256];
     error = convert2DPseudoArrayToHistogram(grayscale, n_rows, n_cols,
             Histogram);
     if (error != E_SUCCESS) {
@@ -106,12 +106,6 @@ error_t analyzeImage()
     for (int i = 137; i <= 146; i++)
         printf("%d\t\t%lf\n",i, Hvalues[i]);
 
-    // convert resulting array to grayscale
-    error=convertHistogramToPseudo2DArray(Histogram, n_rows,n_cols, grayscale);
-    if (error != E_SUCCESS) {
-        printError(error, "Could not convert histogram to pseudo 2D array");
-        goto cleanup;
-    }
     for (int r = 0; r < n_rows; r++) {
         for (int c = 0; c < n_cols; c++) {
         grayscale[r][c] = (grayscale[r][c] >= threshold_value) ? 255 : 0;
@@ -138,18 +132,16 @@ error_t KittlerIllingworthThresholding(uint8_t *histogram, int *thresh)
     // done in helper function (:
 
     int32_t T = 255, i;
-    double min = -1, sum, P, f;
+    double min = -1, sum = 0, P = 0, f = 0;
     // step 3) for each t, compute H(t) where H(t) is defined as follows:
-    //           t
+    //          255
     //  H(t) = - Σ P(h,t)log(f(h,t))
     //          i=0
     for (int t = 0; t <= 255; t++) {
-        sum = 0;
         P = KittlerP(histogram,t);
         f = Kittlerf(histogram,t);
-        for (i = 0; i < 255;i++) {
-            sum += (P*log(f));
-        }
+        sum = (P*log(f));
+
         if ( (-1.0 * sum) < min) T  = t;
     }
 
@@ -169,10 +161,13 @@ error_t RecursiveUpdateFormula(uint8_t *h, int32_t t, double *Hvalues)
 
     var1 = Rvar1(h,t);
     var2 = Rvar2(h,t);
+    double q1 = 0, q2 = 0;
     // recursive update function as shown in homework pdf
     for (int i=1; i < numPixels-1; i++) {
-        H = ( Rq1(h,t)*log(var1) + Rq2(h,t)*log(var2) ) / 2
-            - Rq1(h,t)*log(Rq1(h,t)) - Rq2(h,t)*log(Rq2(h,t));
+        q1 = Rq1(h,t);
+        q2 = Rq2(h,t);
+        H = ( q1*log(var1) + q2*log(var2) ) / 2
+            - q1*log(var1) - q2*log(q2);
 
         Hvalues[i] = H;
     }
