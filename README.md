@@ -2,3 +2,7 @@
 * [Simple Edge Detector](hw2/)
 * [Hough Transform](hw3/)
 * [Histogram Thresholding](hw4/)
+
+---
+
+![UofA Logo](docs/UofA.jfif)
