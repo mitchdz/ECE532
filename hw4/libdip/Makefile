@@ -1,7 +1,5 @@
 # Usage:
-# make run          <- run program
-# make debug        <- debug program
-# make submission   <- auto generate submission folder
+# make all
 ################################ COMPILER ######################################
 LINKER=gcc
 LDFLAGS =-L$(BINDIR)
