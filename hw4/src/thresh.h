@@ -31,6 +31,7 @@ enum _hw4_error
     E_GENERIC_ERROR,
     E_ARRAY_SIZE_MISMATCH,
     E_NOT_IMPLEMENTED,
+    E_RECURSIVE_FIRST_LAST_NOT_FOUND,
 };
 
 typedef enum _hw4_error error_t;
@@ -45,6 +46,7 @@ struct _errordesc{
     { E_GENERIC_ERROR,  (char *)"Generic Error" },
     { E_ARRAY_SIZE_MISMATCH,  (char *)"Array sizes do not match" },
     { E_NOT_IMPLEMENTED,  (char *)"Not implemented yet" },
+    { E_RECURSIVE_FIRST_LAST_NOT_FOUND, (char *)"Recursive first and last index not able to be found"},
 };
 
 void printError(error_t E, char *msg)
@@ -68,15 +70,13 @@ error_t zeroPsuedo2DArray(void** array, int32_t n_rows, int32_t n_cols,
 error_t convert2DPseudoArrayToHistogram(uint8_t **grayscale, int32_t n_rows,
         int32_t n_cols, uint8_t *Histogram)
 {
-    uint8_t histogram[n_rows * n_cols];
     int i, j, grayScaleValue;
     for (i=0;i<n_rows;i++) {
         for (j=0;j<n_cols;j++) {
             grayScaleValue = grayscale[i][j];
-            histogram[grayScaleValue]++;
+            Histogram[grayScaleValue]++;
         }
     }
-    Histogram = histogram;
     return E_SUCCESS;
 }
 
@@ -99,7 +99,7 @@ error_t KittlerIllingworthThresholding(uint8_t *histogram, int *thresh);
  *
  * @return error_t
  */
-error_t RecursiveUpdateFormula(uint8_t *h, int32_t t, double *Hvalues);
+error_t RecursiveUpdateFormula(uint8_t *h, int *threshold, double *Hvalues);
 
 
 /* @brief zeros a psuedo 2D array created by matalloc
@@ -132,4 +132,5 @@ error_t zeroPsuedo2DArray(void** array, int32_t n_rows, int32_t n_cols,
     return E_SUCCESS;
 }
 
+error_t thresholdPngWithKittler(char *input_file);
 #endif // THRESH_H

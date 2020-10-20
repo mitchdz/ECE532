@@ -22,9 +22,9 @@ double Kittlerf(uint8_t *h, int t);
 double KittlerP(uint8_t *h, int t)
 {
     uint8_t hval = h[t];
-    double P = ((double)hval / 255);
+    double P = ((double)hval / 256);
 
-    return P;
+    return P/100.0;
 }
 
 
@@ -174,5 +174,21 @@ double Kittlerf(uint8_t *h, int t)
     return g1 + g2;
 
 }
+
+
+double KittlerH(uint8_t *h, int t)
+{
+    double H = 0;
+    double q1 = Kittlerq1(h,t);
+    double q2 = Kittlerq2(h,t);
+    double u1 = Kittleru1(h,t);
+    double u2 = Kittleru2(h,t);
+
+    H = 0.5 + 0.5*log(2*M_PI)-q1*log(q1)-q2*log(q2)
+        + q1*log(u1) + q2*log(u2);
+
+    return H;
+}
+
 
 #endif
