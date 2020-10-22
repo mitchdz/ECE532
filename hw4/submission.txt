@@ -1,1 +1,1 @@
-kittler threshold value: 86
+threshold value: 86

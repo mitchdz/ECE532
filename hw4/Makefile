@@ -57,8 +57,11 @@ create_dirs:
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR)
+	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR) hw4.zip
 
 .PHONY: submission
-submission: run
-	rm -rf $(SUBMISSIONDIR)
+submission:
+	mkdir -p $(SUBMISSIONDIR)
+	rm -rf $(SUBMISSIONDIR)/*
+	rsync -av ./* $(SUBMISSIONDIR) --exclude=$(SUBMISSIONDIR)
+	zip -r hw4.zip $(SUBMISSIONDIR)
