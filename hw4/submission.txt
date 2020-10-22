@@ -1,0 +1,1 @@
+kittler threshold value: 86

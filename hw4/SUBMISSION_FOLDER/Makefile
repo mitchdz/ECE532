@@ -61,4 +61,5 @@ clean:
 
 .PHONY: submission
 submission: run
-	rm -rf $(SUBMISSIONDIR)
+	mkdir -p $(SUBMISSIONDIR)
+	echo "TODO: implement"
