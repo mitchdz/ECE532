@@ -8,10 +8,12 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/thresh",
+            "program": "${workspaceFolder}/bin/hw5",
             "args": [
-                "input/address.png",
-                "out/address_threshold.png"
+                "-i",
+                "input/keys.png",
+                "-o",
+                "out/keys_hw5.png"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

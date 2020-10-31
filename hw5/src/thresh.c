@@ -9,7 +9,7 @@
 
 #define ARRAY_SIZE 256
 
-error_ECE576A_t convert2DPseudoArrayToHistogram(uint8_t **grayscale, int32_t n_rows,
+void convert2DPseudoArrayToHistogram(uint8_t **grayscale, int32_t n_rows,
         int32_t n_cols, uint8_t *Histogram)
 {
     int r, c;
@@ -18,17 +18,10 @@ error_ECE576A_t convert2DPseudoArrayToHistogram(uint8_t **grayscale, int32_t n_r
             Histogram[grayscale[r][c]]++;
         }
     }
-    return E_ECE576A_SUCCESS;
+    return;
 }
 
-
-error_ECE576A_t findAdaptiveThreshold(IMAGE img)
-{
-    return E_ECE576A_NOT_IMPLEMENTED;
-}
-
-
-error_ECE576A_t RecursiveUpdateFormula(uint8_t *h, int *threshold, double *Hvalues)
+void RecursiveUpdateFormula(uint8_t *h, int *threshold, double *Hvalues)
 {
     double q1prev=0, var1prev=0, mu1prev=0, mu1=0, mu2=0, q1=0, q2=0,
            q2prev=0, var2prev=0, mu2prev=0, var1=0, var2=0, H=0, mu=0;
@@ -65,7 +58,7 @@ findLast:
 calcArraySize:
 
     if (first == -1 || last == -1)
-        return E_ECE576A_RECURSIVE_FIRST_LAST_NOT_FOUND;
+        return;
 
     //explicitly zero out Hvalues if not done before
     for (t = 0; t < 256;t++) Hvalues[t] = 0;
@@ -156,5 +149,38 @@ calcArraySize:
     }
 
     *threshold = determinedThreshold;
-    return E_ECE576A_SUCCESS;
+    return;
+}
+
+void zeroPsuedo2DArray(void** array, int32_t n_rows, int32_t n_cols,
+        TYPE type)
+{
+    int32_t r, c;
+    //zero out Hough Array
+    for (r = 0; r < n_rows; r++) {
+        for (c = 0; c < n_cols; c++) {
+            switch(type) {
+                case INT32_T:
+                    ((int32_t**)array)[r][c] = 0;
+                    break;
+                case UINT8_T:
+                    ((uint8_t **)array)[r][c] = 0;
+                    break;
+            }
+        }
+    }
+    return;
+}
+
+
+void threshold2DPseudoArray(uint8_t** array, int32_t n_rows, int32_t n_cols,
+    int32_t t)
+{
+    int32_t r, c;
+    for (r = 0; r < n_rows; r++) {
+        for (c = 0; c < n_cols; c++) {
+            array[r][c] = (array[r][c] >= t) ? 255 : 0;
+        }
+    }
+    return;
 }

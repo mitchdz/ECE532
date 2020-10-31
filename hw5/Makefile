@@ -31,7 +31,7 @@ OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 all: create_dirs libdip $(BINDIR)/$(PROGNAME)
 
 $(BINDIR)/$(PROGNAME): $(OBJECTS) libdip
-	$(LINKER) $(OBJDIR)/$(PROGNAME).o $(LDFLAGS) $(LDLIBS) -o $@
+	$(LINKER) -o $@ $(OBJECTS) $(LDFLAGS) $(LDLIBS)
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(SRCDIR)/%.h
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -43,7 +43,7 @@ libdip:
 
 .PHONY: run
 run: all
-	./$(BINDIR)/$(PROGNAME) $(INPUT_FILE) $(OUTPUT_FILE)
+	./$(BINDIR)/$(PROGNAME) -i input/keys.png -o out/keys_hw5.png
 
 .PHONY: graybook
 graybook: all
@@ -57,7 +57,7 @@ create_dirs:
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR) hw4.zip
+	rm -rf $(OBJDIR) $(BINDIR) $(SUBMISSIONDIR) $(OUTDIR)
 
 .PHONY: submission
 submission:
