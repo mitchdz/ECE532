@@ -5,28 +5,43 @@
 #include "mcc.h"
 #include "mccNode.h"
 #include "thresh.h"
+#include <limits.h>
 
+bool checkForeground(int value, bool CGL); //private for this file
 
-
-int getLowestEquivalentLabel(uint8_t **ccM, int r, int c, setNode *head)
+bool checkForeground(int value, bool CGL)
 {
-    int lowestLabel = INT_MAX;
+    bool foreground;
+    if (CGL) { //ComponentGrayLevel is 1 meaning black=foreground
+        foreground = ( value > 0) ? true : false;
+    }
+    else {
+        foreground = ( value < 255) ? true : false;
+    }
+    return foreground;
+}
+
+int getLowestEquivalentLabel(int **ccM, int r, int c, setNode *head)
+{
+    int lowestLabel = INT_MAX, tmpLabel;
     int currSet = ccM[r][c];
     
     setNode *sn = getSetNode(head, currSet);
-
-    // sn->labels is the head node with label initialized to zero
-    // every set at this point should have at least one labelNode
-    if (sn->labels->next == NULL) {
-        printf("function getLowestEquivalentLabel could not accest sn->labels->next");
+    if (sn == NULL) {
+        printf("getSetNode returned NULL in getLowestEquivalentLabel\n");
         abort();
     }
 
+    // sn->labels is the head node with label initialized to zero
+    // every set at this point should have at least one labelNode
     labelNode *ln = sn->labels->next;
 
+    if (ln == NULL) return 0; // there are no labels, this is background
+
     while (ln != NULL ) {
-        if (ln->label < lowestLabel) {
-            lowestLabel = ln->label;
+        tmpLabel = ln->label;
+        if (tmpLabel < lowestLabel) {
+            lowestLabel = tmpLabel;
         }
         ln = ln->next;
     }
@@ -35,24 +50,22 @@ int getLowestEquivalentLabel(uint8_t **ccM, int r, int c, setNode *head)
 }
 
 
-void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **ccM)
+void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM, 
+    bool CGL, int *nc)
 {
-    int r,c, i;
-    bool foreground;
-    int uniqueLabel, smallestLabel=0;
-    int32_t tempLabel = INT32_MAX;
+    int r,c, i, tmp, smallestLabel, uniqueLabel = 0;
 
     setNode *head = (setNode *)malloc(sizeof(setNode));
     initializeSetNode(head);
 
-    //explicitly zero outputMatrix if not done before
+    int **ccM = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
     for(r=0;r<img->n_rows;r++){
         for(c=0;c<img->n_cols;c++){
             ccM[r][c] = 0;
         }
     }
 
-    int nw, n, ne, w, e, sw, s, se;
+    int NW, N, NE, W, E, SW, S, SE;
 
     int n[8]; //neighbor
     /*  0 | 1 | 2
@@ -67,49 +80,47 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **ccM)
         for (c = 1; c < img->n_cols-1; c++) {
 
             // only worry about foreground pixels
-            foreground = ( img->raw_bits[r][c] > img->threshold) ? true : false;
-            if (!foreground) continue;
+            if (!checkForeground(img->raw_bits[r][c], CGL)) continue;
 
-            nw = ccM[r-1][c-1];   n  = ccM[r-1][ c ];   ne = ccM[r-1][c+1];
-            w  = ccM[ r ][c-1];                         e  = ccM[ r ][c+1];
-            sw = ccM[r+1][c-1];   s  = ccM[r+1][ c ];   se = ccM[r+1][c+1];
+            NW = ccM[r-1][c-1];   N  = ccM[r-1][ c ];   NE = ccM[r-1][c+1];
+            W  = ccM[ r ][c-1];                         E  = ccM[ r ][c+1];
+            SW = ccM[r+1][c-1];   S  = ccM[r+1][ c ];   SE = ccM[r+1][c+1];
 
             // get 8 neighbor pixels
-            n[0] = ( nw > 0) ? nw : 0;
-            n[1] = ( n  > 0) ? n  : 0;
-            n[2] = ( ne > 0) ? ne : 0;
-            n[3] = ( w  > 0) ? w  : 0;
-            n[4] = ( e  > 0) ? e  : 0;
-            n[5] = ( sw > 0) ? sw : 0;
-            n[6] = ( s  > 0) ? s  : 0;
-            n[7] = ( se > 0) ? se : 0;
+            n[0] = ( NW > 0) ? NW : 0;
+            n[1] = ( N  > 0) ? N  : 0;
+            n[2] = ( NE > 0) ? NE : 0;
+            n[3] = ( W  > 0) ? W  : 0;
+            n[4] = ( E  > 0) ? E  : 0;
+            n[5] = ( SW > 0) ? SW : 0;
+            n[6] = ( S  > 0) ? S  : 0;
+            n[7] = ( SE > 0) ? SE : 0;
 
             // if no unique neighbors, label current element and continue
-            if ((n[0]+n[1]+n[2]+n[3]+n[4]+n[5]+n[6]+n[7]) == 0) {
-                uniqueLabel = getUniqueSetID(head);
-                ccM[r][c] = uniqueLabel;
+            if (n[0] == 0 && n[1] == 0 && n[2] == 0 && n[3] == 0 &&
+                n[4] == 0 && n[5] == 0 && n[6] == 0 && n[7] == 0
+            ) {
+                ccM[r][c] = ++uniqueLabel;
                 addSetID(head, uniqueLabel);
                 continue;
             }
 
             // else if there are neighbors, find smallest label and assign
-            tempLabel = INT32_MAX;
+            smallestLabel = INT_MAX;
             for (i = 0; i < 8; i++) {
-                if (n[i]  > 0) { 
-                    tempLabel = (n[i]  < tempLabel) ? n[i] : tempLabel; 
+                tmp = n[i];
+                if ((tmp > 0) && (tmp < smallestLabel)) {
+                    smallestLabel = tmp;
                 }
             }
-            smallestLabel = tempLabel;
             ccM[r][c] = smallestLabel;
-            incrementNumSetID(head, smallestLabel);
 
             // store equivalence between neighboring labels
             // addEquivalenceLabel checks for duplicates, no need to check here
             for (i = 0; i < 8; i++) {
-                tempLabel = n[i];
-                if (tempLabel > 0) {
-                    addEquivalenceLabel(head, smallestLabel, tempLabel);
-                }
+                if (n[i] == 0) continue; // n[i] is setID, 0 is background
+                addEquivalenceLabel(head, smallestLabel, n[i]);
+                addEquivalenceLabel(head, n[i], smallestLabel);
             }
 
         } // end cols
@@ -119,76 +130,57 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **ccM)
     //               equivalence class
 
     int lowestEquivalentLabel = INT_MAX;
-    for (r = 1; r < img->n_rows-1; r++) { // raster scanning
+    for (r = 1; r < img->n_rows-1; r++) {
         for (c = 1; c < img->n_cols-1; c++) {
 
-            // only worry about foreground pixels
-            foreground = ( img->raw_bits[r][c] > img->threshold) ? true : false;
-            if (!foreground) continue;
-            
-            lowestEquivalentLabel = getLowestEquivalentLabel(ccM,r,c, head);
+             // only worry about foreground pixels
+            if (!checkForeground(img->raw_bits[r][c], CGL)) continue;
+           
+            lowestEquivalentLabel = getLowestEquivalentLabel(ccM,r,c,head);
 
             ccM[r][c] = lowestEquivalentLabel;
 
         } // end col 2nd pass
     } // end row 2nd pass
 
+
+
+    int numSets = 0;
+    int setVal;
+    // have to copy each value of ccM into outccM
+    for (r = 1; r < img->n_rows-1; r++) { // raster scanning
+        for (c = 1; c < img->n_cols-1; c++) {               
+            setVal = ccM[r][c];
+            if (setVal > numSets) numSets = setVal;
+            outccM[r][c] = setVal;
+        } // end col 2nd pass
+    } // end row 2nd pass
+
+    *nc = numSets;
+    return;
 }
 
-
-typedef struct finalsetnode {
-    int setID;
-    uint8_t color;
-    struct finalsetnode *next;
-} finalSetNode;
-
-uint8_t findColor(finalSetNode *fsnHead, int setID)
+void OverlayComponentsOntoImage(IMAGE *img, uint8_t **ccM, int nc, bool CGL, 
+    bool MOV)
 {
-    uint8_t setColor = 0;
-    //check if setID is in list
-    while (fsnHead != NULL && fsnHead->next != NULL) {
-        if (fsnHead->setID == setID) {
-            return fsnHead->color;
-        }
-        // only goes to second-last element, gotta check fsnHead->next :)
-         if (fsnHead->next->setID == setID) {
-            return fsnHead->next->color;
-        }       
-        fsnHead = fsnHead->next;
-    }
+    int r,c, k, outputPixelValue, maxOutputValue;
 
-    // setID does not exist; add to set and create color
-    finalSetNode *fsn = (finalSetNode *)malloc(sizeof(finalSetNode));
-    fsn->setID = setID;
-    fsn->color = fsnHead->color + 10;
-    fsn->next = NULL;
-
-    // only iterated to last node, not past, so we can assign fsnHead->next
-    fsnHead->next = fsn;
-    return fsn->color;
-}
-
-void OverlayComponentsOntoImage(IMAGE *img, uint8_t **ccM)
-{
-    int r,c, setID;
-    bool foreground;
-
-    finalSetNode *fsnhead = (finalSetNode *)malloc(sizeof(finalSetNode));
-    fsnhead->setID = 127;
-    fsnhead->next = NULL;
+    if (MOV) { maxOutputValue = 255; }
+    else     { maxOutputValue = nc; }
 
     for (r = 1; r < img->n_rows-1; r++) { // raster scanning
         for (c = 1; c < img->n_cols-1; c++) {
 
-            // only worry about foreground pixels
-            foreground = ( ccM[r][c] > 0) ? true : false;
-            if (!foreground) continue;
+             // only worry about foreground pixels
+            if (!checkForeground(img->raw_bits[r][c], CGL)) continue;
+ 
+            k = ccM[r][c];
+            if (CGL) { outputPixelValue = round(k*maxOutputValue/nc);    }
+            else     { outputPixelValue = round((k-1)*maxOutputValue/nc);}
 
-            setID = ccM[r][c];
-            img->raw_bits[r][c] = findColor(fsnhead, setID);
+            img->raw_bits[r][c] = outputPixelValue;
 
         } // end col 2nd pass
     } // end row 2nd pass
-
     return;
 }

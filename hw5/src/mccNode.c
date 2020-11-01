@@ -14,7 +14,6 @@ void initializeSetNode(setNode *sn)
     sn->labels->next = NULL;
     sn->labels->label = 0;
     sn->next = NULL;
-    sn->numElements = 0;
     sn->setID = 0;
 }
 
@@ -29,31 +28,22 @@ setNode *getSetNode(setNode* head, int ID)
     return NULL;
 }
 
-void incrementNumSetID(setNode *head, int id)
-{   
-    head = head->next;
-    while (head != NULL) {
-        if (head->setID == id) {                
-            head->numElements++;
-            return;
-        }
-        head = head->next;
-    }
-    return;
-}
-
-
 // be careful that setID exists
 void addEquivalenceLabel(setNode* head, int setID, int label)
 {
     // get the setID node
     setNode *tempSN = getSetNode(head, setID);
+    if (tempSN == NULL) {
+        printf("getSetNode returned NULL in addEquivalenceLabel\n");
+        abort();
+    }
 
     labelNode *labelHead = tempSN->labels;
 
     // iterate through label nodes
     while (labelHead != NULL && labelHead->next != NULL) {
-        if (labelHead->label == label) {                
+        // only iterates to last 
+        if (labelHead->label == label || labelHead->next->label == label) {                
             return;
         }
         labelHead = labelHead->next;
@@ -71,24 +61,16 @@ void addEquivalenceLabel(setNode* head, int setID, int label)
 
 void addSetID(setNode* head, int setID)
 {
-    // no checking if setID already exists
-    while (head != NULL && head->next != NULL)
-        head = head->next;        
-    
+    while (head != NULL && head->next != NULL) {
+        if (head->setID == setID || head->next->setID == setID) {
+            return;
+        }
+        head = head->next;
+    }
+   
     setNode *tempSN = (setNode *)malloc(sizeof(setNode));
     initializeSetNode(tempSN);
     tempSN->setID = setID;
 
     head->next = tempSN;
-}
-
-int getUniqueSetID(setNode* head)
-{
-    head=head->next;
-    int i = 0;
-    while (head != NULL) {
-        i = head->setID; // always incrementing in value
-        head = head->next;
-    }
-    return i+1;
 }

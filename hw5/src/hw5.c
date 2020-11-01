@@ -26,7 +26,7 @@ void printECE576AHW5Help()
 
 int main(int argc,char* argv[]) {
     error_ECE576A_t err = E_ECE576A_GENERIC_ERROR;
-    int MaxOutputValue = 0;
+    int MaxOutputValue = 1;
     int ComponentGrayLevel = 1;
     char inputFile[100];
     char outputFile[100];
@@ -34,7 +34,7 @@ int main(int argc,char* argv[]) {
     char*ifile;
     int c;
     opterr = 0;
-    while ((c = getopt (argc, argv, "ho:i:cm")) != -1)
+    while ((c = getopt (argc, argv, "ho:i:c:m:")) != -1)
          switch (c)
          {
             case 'h':
@@ -73,18 +73,11 @@ int main(int argc,char* argv[]) {
     return 0;
 }
 
-//Otsu's method for finding adaptive threshold
-void findOtsuAdaptiveThreshold(IMAGE *img)
-{
-    img->threshold = 127;
-    return;
-}
-
 error_ECE576A_t ECE576A_HW5(
     const char* inputImageFileName,
     const char* outputImageFileName,
-    uint8_t MaxOutputValue,
-    uint8_t ComponentGrayLevel)
+    uint8_t MOV,
+    uint8_t CGL)
 {
     error_ECE576A_t err = E_ECE576A_SUCCESS;
     IMAGE IMG;
@@ -92,15 +85,16 @@ error_ECE576A_t ECE576A_HW5(
     // read the input PNG
     readPNGandClose((char *)inputImageFileName, &IMG);
 
-    // find adaptive threshold
-    findOtsuAdaptiveThreshold(&IMG);
+    uint8_t histogram[256];
+    convert2DPseudoArrayToHistogram(IMG.raw_bits, IMG.n_rows, IMG.n_cols, histogram);
 
     // find all 8-connected foreground components
     uint8_t **componentMatrix = matalloc(IMG.n_rows, IMG.n_cols, 0, 0, sizeof(uint8_t));
-    findMaximal8ConnectedForegroundComponents(&IMG, componentMatrix);
-
+    int nc; //number of components
+    findMaximal8ConnectedForegroundComponents(&IMG, componentMatrix, CGL, &nc);
+    printf("Number of Connected Components: %d\n", nc);
     // overlay components
-    OverlayComponentsOntoImage(&IMG, componentMatrix);
+    OverlayComponentsOntoImage(&IMG, componentMatrix, nc, CGL, MOV);
 
     // write output
     writePNG(IMG.raw_bits, (char *)outputImageFileName, IMG.n_rows, IMG.n_cols);
