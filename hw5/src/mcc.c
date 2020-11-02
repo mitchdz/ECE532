@@ -23,26 +23,14 @@ bool checkForeground(int value, bool CGL)
 
 int getLowestEquivalentLabel(int **ccM, int r, int c, setNode *head)
 {
-    int lowestLabel = INT_MAX, tmpLabel;
     int currSet = ccM[r][c];
-    
-    setNode *sn = getSetNode(head, currSet);
-    if (sn == NULL) {
-        printf("getSetNode returned NULL in getLowestEquivalentLabel\n");
-        abort();
-    }
+    labelNode *ln = getSetNode(head, currSet)->labels;
 
-    // sn->labels is the head node with label initialized to zero
-    // every set at this point should have at least one labelNode
-    labelNode *ln = sn->labels->next;
-
-    if (ln == NULL) return 0; // there are no labels, this is background
-
+    int lowestLabel = INT_MAX;
     while (ln != NULL ) {
-        tmpLabel = ln->label;
-        if (tmpLabel < lowestLabel) {
-            lowestLabel = tmpLabel;
-        }
+        if (lowestLabel > ln->label)
+            lowestLabel = ln->label;
+
         ln = ln->next;
     }
 
@@ -55,8 +43,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
 {
     int r,c, i, tmp, smallestLabel, uniqueLabel = 0;
 
-    setNode *head = (setNode *)malloc(sizeof(setNode));
-    initializeSetNode(head);
+    setNode *head = NULL;
 
     int **ccM = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
     for(r=0;r<img->n_rows;r++){
@@ -65,7 +52,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
         }
     }
 
-    int NW, N, NE, W, E, SW, S, SE;
+    uint8_t NW, N, NE, W, E, SW, S, SE;
 
     int n[8]; //neighbor
     /*  0 | 1 | 2
@@ -97,11 +84,11 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
             n[7] = ( SE > 0) ? SE : 0;
 
             // if no unique neighbors, label current element and continue
-            if (n[0] == 0 && n[1] == 0 && n[2] == 0 && n[3] == 0 &&
-                n[4] == 0 && n[5] == 0 && n[6] == 0 && n[7] == 0
+            if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0) && (n[3] == 0) &&
+                (n[4] == 0) && (n[5] == 0) && (n[6] == 0) && (n[7] == 0)
             ) {
                 ccM[r][c] = ++uniqueLabel;
-                addSetID(head, uniqueLabel);
+                pushSetID(&head, uniqueLabel);
                 continue;
             }
 
@@ -109,18 +96,18 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
             smallestLabel = INT_MAX;
             for (i = 0; i < 8; i++) {
                 tmp = n[i];
-                if ((tmp > 0) && (tmp < smallestLabel)) {
+                if (tmp == 0) continue;
+                if (smallestLabel > tmp)
                     smallestLabel = tmp;
-                }
             }
             ccM[r][c] = smallestLabel;
+            
 
             // store equivalence between neighboring labels
-            // addEquivalenceLabel checks for duplicates, no need to check here
             for (i = 0; i < 8; i++) {
-                if (n[i] == 0) continue; // n[i] is setID, 0 is background
-                addEquivalenceLabel(head, smallestLabel, n[i]);
-                addEquivalenceLabel(head, n[i], smallestLabel);
+                tmp = n[i];
+                if (tmp == 0) continue; // n[i] is setID, 0 is background
+                unionEquivalenceLabel(head, ccM[r][c], tmp);
             }
 
         } // end cols
@@ -128,6 +115,9 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
 
     // second pass - replace each temp label by the smallest label of 
     //               equivalence class
+
+    int setCounts[100000] = {0};
+
 
     int lowestEquivalentLabel = INT_MAX;
     for (r = 1; r < img->n_rows-1; r++) {
@@ -140,18 +130,22 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
 
             ccM[r][c] = lowestEquivalentLabel;
 
+            setCounts[lowestEquivalentLabel]++;
         } // end col 2nd pass
     } // end row 2nd pass
 
-
-
     int numSets = 0;
+    for (i = 0; i < 100;i++) {
+        if (setCounts[i] > 0) numSets++;
+        printf("set %d:%d\n",i, setCounts[i]);
+    }
+
+
     int setVal;
     // have to copy each value of ccM into outccM
     for (r = 1; r < img->n_rows-1; r++) { // raster scanning
         for (c = 1; c < img->n_cols-1; c++) {               
             setVal = ccM[r][c];
-            if (setVal > numSets) numSets = setVal;
             outccM[r][c] = setVal;
         } // end col 2nd pass
     } // end row 2nd pass
