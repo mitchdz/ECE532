@@ -19,7 +19,7 @@ setNode *getSetNode(setNode* head, int ID);
 int getUniqueSetID(setNode* head);
 void initializeSetNode(setNode *sn);
 void initializeLabelNode(labelNode *ln);
-void unionEquivalenceLabel(setNode* head, int X, int Y);
+void unionEquivalenceLabels(setNode* head, int X, int Y);
 void pushSetID(setNode** head, int setID);
 int getUniqueSetID(setNode* head);
 void listSetNodesLabels(setNode* head, int setNode);

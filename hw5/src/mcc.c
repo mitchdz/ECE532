@@ -41,9 +41,9 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     bool CGL, int *nc, bool verbose)
 
 {
-    int r,c, i, tmp, smallestLabel, uniqueLabel = 1;
+    int r,c, i, tmp, smallestSetID, uniqueLabel = 1;
 
-    setNode *head = NULL;
+    setNode *equivalenceTable = NULL;
 
     int **ccM = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
     for(r=0;r<img->n_rows;r++){
@@ -54,12 +54,12 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
 
     uint8_t NW, N, NE, W, E, SW, S, SE;
 
-    int n[8]; //neighbor
+    int n[4]; //neighbor
     /*  0 | 1 | 2
      *  -----------
-     *  3 | * | 4
+     *  3 | * |
      *  -----------
-     *  5 | 6 | 7
+     *    |   |
      */
     // Hoshen-Kopelman algorithm
     // first pass - assign temporary labels and record equivalences
@@ -70,42 +70,34 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
             if (!checkForeground(img->raw_bits[r][c], CGL)) continue;
 
             NW = ccM[r-1][c-1];   N  = ccM[r-1][ c ];   NE = ccM[r-1][c+1];
-            W  = ccM[ r ][c-1];                         E  = ccM[ r ][c+1];
-            SW = ccM[r+1][c-1];   S  = ccM[r+1][ c ];   SE = ccM[r+1][c+1];
+            W  = ccM[ r ][c-1];
 
-            // get 8 neighbor pixels
+            // get 4 neighbor pixels (8-connectivity)
             n[0] = ( NW > 0) ? NW : 0;
             n[1] = ( N  > 0) ? N  : 0;
             n[2] = ( NE > 0) ? NE : 0;
             n[3] = ( W  > 0) ? W  : 0;
-            n[4] = ( E  > 0) ? E  : 0;
-            n[5] = ( SW > 0) ? SW : 0;
-            n[6] = ( S  > 0) ? S  : 0;
-            n[7] = ( SE > 0) ? SE : 0;
 
             // if no unique neighbors, label current element and continue
-            if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0) && (n[3] == 0) &&
-                (n[4] == 0) && (n[5] == 0) && (n[6] == 0) && (n[7] == 0)
-            ) {
+            if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0) && (n[3] == 0)) {
                 ccM[r][c] = uniqueLabel;
-                pushSetID(&head, uniqueLabel);
+                pushSetID(&equivalenceTable, uniqueLabel);
                 uniqueLabel++;
                 continue;
             }
 
             // else if there are neighbors, find smallest label and assign
-            smallestLabel = INT_MAX;
-            for (i = 0; i < 8; i++) {
-                tmp = n[i];
-                if (smallestLabel > tmp && tmp != 0)
-                    smallestLabel = tmp;
+            smallestSetID = INT_MAX;
+            for (i = 0; i < 4; i++) {
+                if (smallestSetID > n[i] && n[i] != 0)
+                    smallestSetID = n[i];
             }
-            ccM[r][c] = smallestLabel;
+            ccM[r][c] = smallestSetID;
 
             // store equivalence between neighboring labels
             for (i = 0; i < 8; i++) {
                 if (n[i] != 0)
-                    unionEquivalenceLabel(head, smallestLabel, n[i]);
+                    unionEquivalenceLabels(equivalenceTable, smallestSetID, n[i]);
             }
 
         } // end cols
@@ -124,7 +116,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
              // only worry about foreground pixels
             if (!checkForeground(img->raw_bits[r][c], CGL)) continue;
            
-            lowestEquivalentLabel = getLowestEquivalentLabel(head,ccM[r][c]);
+            lowestEquivalentLabel = getLowestEquivalentLabel(equivalenceTable, ccM[r][c]);
 
             ccM[r][c] = lowestEquivalentLabel;
 
@@ -138,7 +130,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
         if (verbose) printf("set %d:%d\n",i, setCounts[i]);
     }
 
-    if (verbose) listEquivalencetable(head);
+    if (verbose) listEquivalencetable(equivalenceTable);
 
     int setVal;
     // have to copy each value of ccM into outccM

@@ -59,7 +59,7 @@ void combineSetIDLabels(setNode* head, int setX, int setY)
     }
 }
 
-void unionEquivalenceLabel(setNode* head, int X, int Y)
+void unionEquivalenceLabels(setNode* head, int X, int Y)
 {
     combineSetIDLabels(head, Y, X);
     combineSetIDLabels(head, X, Y);
@@ -71,7 +71,7 @@ void pushSetID(setNode** head, int ID)
     initializeSetNode(tempSN);
     tempSN->setID = ID;
 
-    // necessary for unionEquivalenceLabel
+    // necessary for unionEquivalenceLabels
     labelNode *ln = (labelNode *)malloc(sizeof(labelNode));
     initializeLabelNode(ln);
     ln->label = ID;
