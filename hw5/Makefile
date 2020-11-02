@@ -43,8 +43,8 @@ libdip:
 
 .PHONY: run
 run: all
-	./$(BINDIR)/$(PROGNAME) -i input/keys.png -o out/keys_hw5.png
-	./$(BINDIR)/$(PROGNAME) -c 0 -m 0 -i input/book.png -o out/book_hw5.png
+	./$(BINDIR)/$(PROGNAME) -v -i input/keys.png -o out/keys_hw5.png
+	./$(BINDIR)/$(PROGNAME) -v -c 0 -m 0 -i input/book.png -o out/book_hw5.png
 
 .PHONY: graybook
 graybook: all
