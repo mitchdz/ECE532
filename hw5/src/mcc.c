@@ -95,7 +95,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
             ccM[r][c] = smallestSetID;
 
             // store equivalence between neighboring labels
-            for (i = 0; i < 8; i++) {
+            for (i = 0; i < 4; i++) {
                 if (n[i] != 0)
                     unionEquivalenceLabels(equivalenceTable, smallestSetID, n[i]);
             }
