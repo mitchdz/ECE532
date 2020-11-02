@@ -61,6 +61,7 @@ void combineSetIDLabels(setNode* head, int setX, int setY)
 
 void unionEquivalenceLabels(setNode* head, int X, int Y)
 {
+    if (X == Y) return;
     combineSetIDLabels(head, Y, X);
     combineSetIDLabels(head, X, Y);
 }
