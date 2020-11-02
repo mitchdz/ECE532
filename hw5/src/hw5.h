@@ -2,6 +2,7 @@
 #define HW5_H
 
 #include "ECE576A.h"
+#include <stdbool.h>
 
 void printECE576AHW5Help();
 
@@ -41,6 +42,7 @@ error_ECE576A_t ECE576A_HW5(
     const char* inputImageFileName,
     const char* outputImageFileName,
     uint8_t MaxOutputValue,
-    uint8_t ComponentGrayLevel);
+    uint8_t ComponentGrayLevel,
+    bool verbose);
 
 #endif /* HW5_H */

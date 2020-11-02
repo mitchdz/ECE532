@@ -21,10 +21,9 @@ bool checkForeground(int value, bool CGL)
     return foreground;
 }
 
-int getLowestEquivalentLabel(int **ccM, int r, int c, setNode *head)
+int getLowestEquivalentLabel(setNode *head, int setID)
 {
-    int currSet = ccM[r][c];
-    labelNode *ln = getSetNode(head, currSet)->labels;
+    labelNode *ln = getSetNode(head, setID)->labels;
 
     int lowestLabel = INT_MAX;
     while (ln != NULL ) {
@@ -39,7 +38,8 @@ int getLowestEquivalentLabel(int **ccM, int r, int c, setNode *head)
 
 
 void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM, 
-    bool CGL, int *nc)
+    bool CGL, int *nc, bool verbose)
+
 {
     int r,c, i, tmp, smallestLabel, uniqueLabel = 1;
 
@@ -104,9 +104,8 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
 
             // store equivalence between neighboring labels
             for (i = 0; i < 8; i++) {
-                tmp = n[i]; //tmp is setID of neighbor
-                if (tmp != 0)
-                    unionEquivalenceLabel(head, smallestLabel, tmp);
+                if (n[i] != 0)
+                    unionEquivalenceLabel(head, smallestLabel, n[i]);
             }
 
         } // end cols
@@ -125,7 +124,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
              // only worry about foreground pixels
             if (!checkForeground(img->raw_bits[r][c], CGL)) continue;
            
-            lowestEquivalentLabel = getLowestEquivalentLabel(ccM,r,c,head);
+            lowestEquivalentLabel = getLowestEquivalentLabel(head,ccM[r][c]);
 
             ccM[r][c] = lowestEquivalentLabel;
 
@@ -136,9 +135,10 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     int numSets = 0;
     for (i = 0; i < 100;i++) {
         if (setCounts[i] > 0) numSets++;
-        //printf("set %d:%d\n",i, setCounts[i]);
+        if (verbose) printf("set %d:%d\n",i, setCounts[i]);
     }
 
+    if (verbose) listEquivalencetable(head);
 
     int setVal;
     // have to copy each value of ccM into outccM

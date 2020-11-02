@@ -22,7 +22,8 @@ void initializeLabelNode(labelNode *ln);
 void unionEquivalenceLabel(setNode* head, int X, int Y);
 void pushSetID(setNode** head, int setID);
 int getUniqueSetID(setNode* head);
-
+void listSetNodesLabels(setNode* head, int setNode);
+void listEquivalencetable(setNode* head);
 
 
 #endif /* MCCNODE_H */
