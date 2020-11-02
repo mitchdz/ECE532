@@ -27,6 +27,18 @@ setNode *getSetNode(setNode* head, int ID)
     return NULL;
 }
 
+
+void pushLabelNode(labelNode** head, int ID)
+{
+    labelNode *ln = (labelNode *)malloc(sizeof(labelNode));
+    initializeLabelNode(ln);
+    ln->label = ID;
+
+    ln->next = (*head);
+    (*head) = ln;
+}
+
+
 // adds X labels into Y
 void combineSetIDLabels(setNode* head, int setX, int setY)
 {
@@ -42,21 +54,14 @@ void combineSetIDLabels(setNode* head, int setX, int setY)
         xLabel = lnX->label;
         exists = false;
         // iterate through all of setY labels
-        while (yLabelNode != NULL && yLabelNode->next != NULL && !exists) {
-            // because we are only iterating to the last node, we need to
-            // check yLabelNode->next->label because if the last label is in there
-            // then this would not detect it.
-            if (yLabelNode->label == xLabel || yLabelNode->next->label == xLabel) {
+        while (yLabelNode != NULL && !exists) {
+            if (yLabelNode->label == xLabel) {
                 exists= true;
             }
             yLabelNode=yLabelNode->next;
         }
         if (!exists) { // if X label not found in Y, add the label to Y
-            labelNode *tmpLabelNode = (labelNode *)malloc(sizeof(labelNode));
-            initializeLabelNode(tmpLabelNode);
-            tmpLabelNode->label = xLabel;
-            tmpLabelNode->next = NULL;
-            yLabelNode->next=tmpLabelNode;
+            pushLabelNode(&getSetNode(head, setY)->labels, xLabel);
         }
         lnX = lnX->next;
     }
