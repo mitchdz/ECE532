@@ -41,7 +41,7 @@ int getLowestEquivalentLabel(int **ccM, int r, int c, setNode *head)
 void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM, 
     bool CGL, int *nc)
 {
-    int r,c, i, tmp, smallestLabel, uniqueLabel = 0;
+    int r,c, i, tmp, smallestLabel, uniqueLabel = 1;
 
     setNode *head = NULL;
 
@@ -87,8 +87,9 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
             if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0) && (n[3] == 0) &&
                 (n[4] == 0) && (n[5] == 0) && (n[6] == 0) && (n[7] == 0)
             ) {
-                ccM[r][c] = ++uniqueLabel;
+                ccM[r][c] = uniqueLabel;
                 pushSetID(&head, uniqueLabel);
+                uniqueLabel++;
                 continue;
             }
 
@@ -96,18 +97,16 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
             smallestLabel = INT_MAX;
             for (i = 0; i < 8; i++) {
                 tmp = n[i];
-                if (tmp == 0) continue;
-                if (smallestLabel > tmp)
+                if (smallestLabel > tmp && tmp != 0)
                     smallestLabel = tmp;
             }
             ccM[r][c] = smallestLabel;
-            
 
             // store equivalence between neighboring labels
             for (i = 0; i < 8; i++) {
-                tmp = n[i];
-                if (tmp == 0) continue; // n[i] is setID, 0 is background
-                unionEquivalenceLabel(head, ccM[r][c], tmp);
+                tmp = n[i]; //tmp is setID of neighbor
+                if (tmp != 0)
+                    unionEquivalenceLabel(head, smallestLabel, tmp);
             }
 
         } // end cols
@@ -137,7 +136,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     int numSets = 0;
     for (i = 0; i < 100;i++) {
         if (setCounts[i] > 0) numSets++;
-        printf("set %d:%d\n",i, setCounts[i]);
+        //printf("set %d:%d\n",i, setCounts[i]);
     }
 
 
