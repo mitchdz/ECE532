@@ -52,7 +52,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
         }
     }
 
-    uint8_t NW, N, NE, W, E, SW, S, SE;
+    int NW, N, NE, W;
 
     int n[4]; //neighbor
     /*  0 | 1 | 2
