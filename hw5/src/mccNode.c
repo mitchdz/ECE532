@@ -30,15 +30,18 @@ setNode *getSetNode(setNode* head, int ID)
 // adds X labels into Y
 void combineSetIDLabels(setNode* head, int setX, int setY)
 {
+    //lnX is head of setX labels which is a linked list of labelNode
     labelNode *lnX = getSetNode(head,setX)->labels;
     labelNode *yLabelNode = NULL;
     int xLabel = -1;
 
     bool exists;
     while (lnX != NULL) {
+        // get head of setY labels
         yLabelNode = getSetNode(head, setY)->labels;
         xLabel = lnX->label;
-        exists = false; // assume false
+        exists = false;
+        // iterate through all of setY labels
         while (yLabelNode != NULL && yLabelNode->next != NULL && !exists) {
             // because we are only iterating to the last node, we need to
             // check yLabelNode->next->label because if the last label is in there
