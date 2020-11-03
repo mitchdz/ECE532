@@ -110,7 +110,7 @@ error_ECE576A_t ECE576A_HW5(
     convert2DPseudoArrayToHistogram(IMG.raw_bits, IMG.n_rows, IMG.n_cols, histogram);
 
     for (int i =0; i < 255; i++) {
-        printf("p:%d\t%d\n",i,histogram[i]);
+        //printf("p:%d\t%d\n",i,histogram[i]);
     }
 
     // write output

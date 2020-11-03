@@ -59,6 +59,7 @@ bool cnv(int **label, int r, int c)
         label[r][c] = M;
         return true;
     }
+    else return false;
 }
 
 void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
