@@ -85,16 +85,10 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
     do
     {
         change = false;
-        for (r = 1; r < img->n_rows-1;r++)
-            for (c = 1; c < img->n_cols - 1; c++)
-                if (label[r][c] != 0) {
-                    change = checkNeighborValues(label, r, c);
-                }
-        for (r = img->n_rows-1; r > 0; r--)
-            for (c = img->n_cols-1; c > 0; c--)
-                if (label[r][c] != 0) {
-                    change = checkNeighborValues(label, r, c);
-                }
+        for (r = 1; r < img->n_rows-1;r++) for (c = 1; c < img->n_cols - 1; c++)
+                if (label[r][c] != 0) change = checkNeighborValues(label, r, c);
+        for (r = img->n_rows-1; r > 0; r--) for (c = img->n_cols-1; c > 0; c--)
+                if (label[r][c] != 0) change = checkNeighborValues(label, r, c);
     } // end do
     while (change == true);
 
