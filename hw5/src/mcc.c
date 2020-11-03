@@ -106,8 +106,8 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     // second pass - replace each temp label by the smallest label of 
     //               equivalence class
 
-    int setCounts[100000] = {0};
-
+    int *setCounts = (int *)malloc(sizeof(int)*uniqueLabel);
+    for (i = 0; i < uniqueLabel;i++) setCounts[i] = 0;
 
     int lowestEquivalentLabel = INT_MAX;
     for (r = 1; r < img->n_rows-1; r++) {
@@ -125,10 +125,11 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     } // end row 2nd pass
 
     int numSets = 0;
-    for (i = 0; i < 100;i++) {
+    for (i = 0; i < uniqueLabel;i++) {
         if (setCounts[i] > 0) numSets++;
         if (verbose) printf("set %d:%d\n",i, setCounts[i]);
     }
+    free(setCounts);
 
     if (verbose) listEquivalencetable(equivalenceTable);
 

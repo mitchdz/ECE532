@@ -175,8 +175,7 @@ void test_ECE576A_HW5_2()
 
     /* 0 0 0 0 0 0 0
      * 0 0 1 0 1 0 0
-     * 0 1 1 1 1 0 0
-     * 0 0 0 0 0 0 0
+     * 0 0 1 1 1 0 0
      * 0 0 0 0 0 0 0
      * 0 0 0 0 0 0 0
      * 0 0 0 0 0 0 0
@@ -189,7 +188,6 @@ void test_ECE576A_HW5_2()
     }
     tmpMatrix[1][2] = 0;
     tmpMatrix[1][4] = 0;
-    tmpMatrix[2][1] = 0;
     tmpMatrix[2][2] = 0;
     tmpMatrix[2][3] = 0;
     tmpMatrix[2][4] = 0;
@@ -204,9 +202,8 @@ void test_ECE576A_HW5_2()
     // overlay components
     OverlayComponentsOntoImage(&IMG, componentMatrix, nc, CGL, MOV);
 
-    char filename[100] = "test/output_test.png";
     // write output
-    writePNG(IMG.raw_bits, (char *)filename, IMG.n_rows, IMG.n_cols);
+    //writePNG(IMG.raw_bits, (char *)"test/output_test.png", IMG.n_rows, IMG.n_cols);
 
     matfree(IMG.raw_bits);
     matfree(componentMatrix);
