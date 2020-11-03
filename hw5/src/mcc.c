@@ -48,15 +48,10 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
 
     int n[4], NW, N, NE, W; // neighbors
     int nextLabel = 1;
-    for (r = 1; r < img->n_rows-1; r++) { // raster scanning
-        for (c = 1; c < img->n_cols - 1; c++) {
+    for (r=1;r<img->n_rows-1;r++) { // raster scanning
+        for (c=1;c<img->n_cols-1;c++) {
             // only worry about foreground pixels
-            if (checkForeground(img->raw_bits[r][c], CGL)) {
-                label[r][c] = nextLabel++;
-            }
-            else {
-                label = 0;
-            }
+            checkForeground(img->raw_bits[r][c], CGL) ? (label[r][c] = nextLabel++) : (label[r][c] = 0);
         }
     }
     bool change=false;
@@ -80,6 +75,7 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
                     }
 
                     if (M != label[r][c]) {
+                        label[r][c] = M;
                         change = true;
                     }
                 }
@@ -100,6 +96,7 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
                         }
 
                         if (M != label[r][c]) {
+                            label[r][c] = M;
                             change = true;
                         }
                     }
