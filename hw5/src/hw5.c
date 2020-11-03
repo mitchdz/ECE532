@@ -26,7 +26,8 @@ void printECE576AHW5Help()
     printf("\t\tverbose\n");
 }
 
-void test_ECE576A_HW5();
+void test_ECE576A_HW5_1();
+void test_ECE576A_HW5_2();
 
 int main(int argc,char* argv[]) {
     error_ECE576A_t err = E_ECE576A_GENERIC_ERROR;
@@ -71,12 +72,14 @@ int main(int argc,char* argv[]) {
     if (inputFile == NULL)
         printError(err, "no input file specified");
 
-    err = ECE576A_HW5(inputFile, outputFile, MaxOutputValue,
-        ComponentGrayLevel, verbose);
-    if (err != E_ECE576A_SUCCESS) {
-        printError(err, "error running hw5");
-        return 1;
-    }
+    //err = ECE576A_HW5(inputFile, outputFile, MaxOutputValue, ComponentGrayLevel, verbose);
+    //if (err != E_ECE576A_SUCCESS) {
+    //    printError(err, "error running hw5");
+    //    return 1;
+    //}
+
+    test_ECE576A_HW5_2();
+
 
     return 0;
 }
@@ -115,7 +118,7 @@ error_ECE576A_t ECE576A_HW5(
     return err;
 }
 
-void test_ECE576A_HW5()
+void test_ECE576A_HW5_1()
 {
     int nRows = 5;
     int nCols = 5;
@@ -148,6 +151,55 @@ void test_ECE576A_HW5()
     uint8_t **componentMatrix = matalloc(IMG.n_rows, IMG.n_cols, 0, 0, sizeof(uint8_t));
     int nc; //number of components
     findMaximal8ConnectedForegroundComponents(&IMG, componentMatrix, CGL, &nc, true);
+
+    // overlay components
+    OverlayComponentsOntoImage(&IMG, componentMatrix, nc, CGL, MOV);
+
+    char filename[100] = "test/output_test.png";
+    // write output
+    writePNG(IMG.raw_bits, (char *)filename, IMG.n_rows, IMG.n_cols);
+
+    matfree(IMG.raw_bits);
+    matfree(componentMatrix);
+}
+void test_ECE576A_HW5_2()
+{
+    int nRows = 6;
+    int nCols = 6;
+
+    int CGL = 0, MOV = 0;
+
+    IMAGE IMG;
+    IMG.n_cols = nCols;
+    IMG.n_rows = nCols;
+
+    /* 0 0 0 0 0 0 0
+     * 0 0 1 0 1 0 0
+     * 0 1 1 1 1 0 0
+     * 0 0 0 0 0 0 0
+     * 0 0 0 0 0 0 0
+     * 0 0 0 0 0 0 0
+     * 0 0 0 0 0 0 0
+     */
+    uint8_t **tmpMatrix = matalloc(IMG.n_rows, IMG.n_cols, 0, 0, sizeof(uint8_t));
+    for (int r = 0; r < 5; r++) {
+        for (int c = 0; c < 5; c++) {
+            tmpMatrix[r][c] = 255;
+        }
+    }
+    tmpMatrix[1][2] = 0;
+    tmpMatrix[1][4] = 0;
+    tmpMatrix[2][1] = 0;
+    tmpMatrix[2][2] = 0;
+    tmpMatrix[2][3] = 0;
+    tmpMatrix[2][4] = 0;
+
+    IMG.raw_bits = tmpMatrix;
+
+    uint8_t **componentMatrix = matalloc(IMG.n_rows, IMG.n_cols, 0, 0, sizeof(uint8_t));
+    int nc; //number of components
+    findMaximal8ConnectedForegroundComponents(&IMG, componentMatrix, CGL, &nc, true);
+    printf("Number of Connected Components: %d\n", nc);
 
     // overlay components
     OverlayComponentsOntoImage(&IMG, componentMatrix, nc, CGL, MOV);
