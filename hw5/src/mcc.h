@@ -9,5 +9,5 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     bool CGL, int *nc, bool verbose);
 void OverlayComponentsOntoImage(IMAGE *img, uint8_t **componentMatrix, int nc,
     bool CGL, bool MOV);
-
+void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose);
 #endif /*MCC_H*/

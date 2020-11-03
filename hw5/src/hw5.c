@@ -69,14 +69,14 @@ int main(int argc,char* argv[]) {
     if (inputFile == NULL)
         printError(err, "no input file specified");
 
-    //err = ECE576A_HW5(inputFile, outputFile, MaxOutputValue, ComponentGrayLevel, verbose);
-    //if (err != E_ECE576A_SUCCESS) {
-    //    printError(err, "error running hw5");
-    //    return 1;
-    //}
+    err = ECE576A_HW5(inputFile, outputFile, MaxOutputValue, ComponentGrayLevel, verbose);
+    if (err != E_ECE576A_SUCCESS) {
+        printError(err, "error running hw5");
+        return 1;
+    }
 
-    test_ECE576A_HW5_2(true);
-    test_ECE576A_HW5_1(true);
+    //test_ECE576A_HW5_2(true);
+    //test_ECE576A_HW5_1(true);
 
     return 0;
 }
@@ -101,7 +101,8 @@ error_ECE576A_t ECE576A_HW5(
     // find all 8-connected foreground components
     uint8_t **componentMatrix = matalloc(IMG.n_rows, IMG.n_cols, 0, 0, sizeof(uint8_t));
     int nc; //number of components
-    findMaximal8ConnectedForegroundComponents(&IMG, componentMatrix, CGL, &nc, verbose);
+    //findMaximal8ConnectedForegroundComponents(&IMG, componentMatrix, CGL, &nc, verbose);
+    iterativeCCL(&IMG, componentMatrix, CGL, &nc, verbose);
     printf("Number of Connected Components: %d\n", nc);
     // overlay components
     OverlayComponentsOntoImage(&IMG, componentMatrix, nc, CGL, MOV);

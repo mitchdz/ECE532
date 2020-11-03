@@ -35,6 +35,94 @@ int getLowestEquivalentLabel(setNode *head, int setID)
 
     return lowestLabel;
 }
+void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
+{
+    int r,c, i, tmp, M;
+
+    int **label = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
+    for(r=0;r<img->n_rows;r++){
+        for(c=0;c<img->n_cols;c++){
+            label[r][c] = 0;
+        }
+    }
+
+    int n[4], NW, N, NE, W; // neighbors
+    int nextLabel = 1;
+    for (r = 1; r < img->n_rows-1; r++) { // raster scanning
+        for (c = 1; c < img->n_cols - 1; c++) {
+            // only worry about foreground pixels
+            if (checkForeground(img->raw_bits[r][c], CGL)) {
+                label[r][c] = nextLabel++;
+            }
+            else {
+                label = 0;
+            }
+        }
+    }
+    bool change=false;
+    do
+    {
+        change = false;
+        for (r = 1; img->n_rows-1;r++) {
+            for (c = 1; c < img->n_cols - 1; c++) {
+                if (label[r][c] != 0) {
+
+                    // get 4 neighbor pixels (8-connectivity)
+                    n[0] = (NW > 0) ? NW : 0;
+                    n[1] = (N > 0) ? N : 0;
+                    n[2] = (NE > 0) ? NE : 0;
+                    n[3] = (W > 0) ? W : 0;
+
+                    M = INT_MAX;
+                    for (i = 0; i < 4; i++) {
+                        if (M > n[i] && n[i] != 0)
+                            M = n[i];
+                    }
+
+                    if (M != label[r][c]) {
+                        change = true;
+                    }
+                }
+            for (r = img->n_rows-1; r > 1; r--) {
+                for (c = img->n_cols-1; c > 1; c--) {
+                    if (label[r][c] != 0) {
+
+                        // get 4 neighbor pixels (8-connectivity)
+                        n[0] = (NW > 0) ? NW : 0;
+                        n[1] = (N > 0) ? N : 0;
+                        n[2] = (NE > 0) ? NE : 0;
+                        n[3] = (W > 0) ? W : 0;
+
+                        M = INT_MAX;
+                        for (i = 0; i < 4; i++) {
+                            if (M > n[i] && n[i] != 0)
+                                M = n[i];
+                        }
+
+                        if (M != label[r][c]) {
+                            change = true;
+                        }
+                    }
+                } // end inner col
+            } // end inner row
+            } // end col
+        } // end row
+
+    } // end do
+    while (change == true);
+
+    // have to copy each value of ccM into outccM
+    for (r = 1; r < img->n_rows-1; r++) { // raster scanning
+        for (c = 1; c < img->n_cols-1; c++) {
+            outccM[r][c] = label[r][c];
+        } // end col 2nd pass
+    } // end row 2nd pass
+
+    int numSets = 2;
+    *nc = numSets;
+    return;
+}
+
 
 
 void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM, 
