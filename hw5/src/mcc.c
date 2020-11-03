@@ -37,7 +37,7 @@ int getLowestEquivalentLabel(setNode *head, int setID)
 }
 void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
 {
-    int r,c, i, tmp, M;
+    int r,c,i,M;
 
     int **label = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
     for(r=0;r<img->n_rows;r++){
@@ -58,8 +58,8 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
     do
     {
         change = false;
-        for (r = 1; img->n_rows-1;r++) {
-            for (c = 1; c < img->n_cols - 1; c++) {
+        for (r = 1; r < img->n_rows-1;r++)
+            for (c = 1; c < img->n_cols - 1; c++)
                 if (label[r][c] != 0) {
 
                     // get 4 neighbor pixels (8-connectivity)
@@ -79,32 +79,26 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
                         change = true;
                     }
                 }
-            for (r = img->n_rows-1; r > 1; r--) {
-                for (c = img->n_cols-1; c > 1; c--) {
-                    if (label[r][c] != 0) {
+        for (r = img->n_rows-1; r > 1; r--)
+            for (c = img->n_cols-1; c > 1; c--)
+                if (label[r][c] != 0) {
+                    // get 4 neighbor pixels (8-connectivity)
+                    n[0] = (NW > 0) ? NW : 0;
+                    n[1] = (N > 0) ? N : 0;
+                    n[2] = (NE > 0) ? NE : 0;
+                    n[3] = (W > 0) ? W : 0;
 
-                        // get 4 neighbor pixels (8-connectivity)
-                        n[0] = (NW > 0) ? NW : 0;
-                        n[1] = (N > 0) ? N : 0;
-                        n[2] = (NE > 0) ? NE : 0;
-                        n[3] = (W > 0) ? W : 0;
-
-                        M = INT_MAX;
-                        for (i = 0; i < 4; i++) {
-                            if (M > n[i] && n[i] != 0)
-                                M = n[i];
-                        }
-
-                        if (M != label[r][c]) {
-                            label[r][c] = M;
-                            change = true;
-                        }
+                    M = INT_MAX;
+                    for (i = 0; i < 4; i++) {
+                        if (M > n[i] && n[i] != 0)
+                            M = n[i];
                     }
-                } // end inner col
-            } // end inner row
-            } // end col
-        } // end row
 
+                    if (M != label[r][c]) {
+                        label[r][c] = M;
+                        change = true;
+                    }
+                }
     } // end do
     while (change == true);
 
