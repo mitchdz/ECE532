@@ -35,6 +35,34 @@ int getLowestEquivalentLabel(setNode *head, int setID)
 
     return lowestLabel;
 }
+
+bool checkNeighborValues(int **label, int r, int c)
+{
+    int n[8], NW, N, NE, W, E, SW, S, SE; // neighbors
+    NW = label[r-1][c-1];   N  = label[r-1][ c ];   NE = label[r-1][c+1];
+    W  = label[ r ][c-1];                         E  = label[ r ][c+1];
+    SW = label[r+1][c-1];   S  = label[r+1][ c ];   SE = label[r+1][c+1];
+
+    // get 8 neighbor pixels (8-connectivity)
+    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
+    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0) ? E : 0;
+    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
+
+    int M = INT_MAX;
+    for (int i = 0; i < 8; i++) {
+        if (M > n[i] && n[i] != 0)
+            M = n[i];
+    }
+
+    if (M != label[r][c]) {
+        label[r][c] = M;
+        return true;
+    }
+
+}
+
+
+
 void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
 {
     int r,c,i,M;
@@ -46,7 +74,6 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
         }
     }
 
-    int n[8], NW, N, NE, W, E, SW, S, SE; // neighbors
     int nextLabel = 1;
     for (r=1;r<img->n_rows-1;r++) { // raster scanning
         for (c=1;c<img->n_cols-1;c++) {
@@ -61,48 +88,12 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
         for (r = 1; r < img->n_rows-1;r++)
             for (c = 1; c < img->n_cols - 1; c++)
                 if (label[r][c] != 0) {
-                    NW = label[r-1][c-1];   N  = label[r-1][ c ];   NE = label[r-1][c+1];
-                    W  = label[ r ][c-1];                         E  = label[ r ][c+1];
-                    SW = label[r+1][c-1];   S  = label[r+1][ c ];   SE = label[r+1][c+1];
-
-                    // get 8 neighbor pixels (8-connectivity)
-                    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
-                    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0) ? E : 0;
-                    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
-
-                    M = INT_MAX;
-                    for (i = 0; i < 8; i++) {
-                        if (M > n[i] && n[i] != 0)
-                            M = n[i];
-                    }
-
-                    if (M != label[r][c]) {
-                        label[r][c] = M;
-                        change = true;
-                    }
+                    change = checkNeighborValues(label, r, c);
                 }
         for (r = img->n_rows-1; r > 0; r--)
             for (c = img->n_cols-1; c > 0; c--)
                 if (label[r][c] != 0) {
-                    NW = label[r-1][c-1];   N  = label[r-1][ c ];   NE = label[r-1][c+1];
-                    W  = label[ r ][c-1];                         E  = label[ r ][c+1];
-                    SW = label[r+1][c-1];   S  = label[r+1][ c ];   SE = label[r+1][c+1];
-
-                    // get 8 neighbor pixels (8-connectivity)
-                    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
-                    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0) ? E : 0;
-                    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
-
-                    M = INT_MAX;
-                    for (i = 0; i < 8; i++) {
-                        if (M > n[i] && n[i] != 0)
-                            M = n[i];
-                    }
-
-                    if (M != label[r][c]) {
-                        label[r][c] = M;
-                        change = true;
-                    }
+                    change = checkNeighborValues(label, r, c);
                 }
     } // end do
     while (change == true);
