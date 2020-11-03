@@ -36,7 +36,7 @@ int getLowestEquivalentLabel(setNode *head, int setID)
     return lowestLabel;
 }
 
-bool checkNeighborValues(int **label, int r, int c)
+bool cnv(int **label, int r, int c)
 {
     int n[8], NW, N, NE, W, E, SW, S, SE; // neighbors
     NW = label[r-1][c-1];   N  = label[r-1][ c ];   NE = label[r-1][c+1];
@@ -67,10 +67,10 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
 {
     int r,c,i,M;
 
-    int **label = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
+    int **l = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
     for(r=0;r<img->n_rows;r++){
         for(c=0;c<img->n_cols;c++){
-            label[r][c] = 0;
+            l[r][c] = 0;
         }
     }
 
@@ -78,24 +78,22 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
     for (r=1;r<img->n_rows-1;r++) { // raster scanning
         for (c=1;c<img->n_cols-1;c++) {
             // only worry about foreground pixels
-            checkForeground(img->raw_bits[r][c], CGL) ? (label[r][c] = nextLabel++) : (label[r][c] = 0);
+            checkForeground(img->raw_bits[r][c], CGL) ? (l[r][c] = nextLabel++) : (l[r][c] = 0);
         }
     }
     bool change=false;
     do
     {
         change = false;
-        for (r = 1; r < img->n_rows-1;r++) for (c = 1; c < img->n_cols - 1; c++)
-                if (label[r][c] != 0) change = checkNeighborValues(label, r, c);
-        for (r = img->n_rows-1; r > 0; r--) for (c = img->n_cols-1; c > 0; c--)
-                if (label[r][c] != 0) change = checkNeighborValues(label, r, c);
+        for (r =1; r < img->n_rows-1;r++) for (c = 1; c < img->n_cols - 1; c++) if (l[r][c] != 0) change = cnv(l, r, c);
+        for (r = img->n_rows-1; r > 0; r--) for (c = img->n_cols-1; c > 0; c--) if (l[r][c] != 0) change = cnv(l, r, c);
     } // end do
     while (change == true);
 
-    // have to copy each value of label into outccM
+    // have to copy each value of l into outccM
     for (r = 1; r < img->n_rows-1; r++) { // raster scanning
         for (c = 1; c < img->n_cols-1; c++) {
-            outccM[r][c] = label[r][c];
+            outccM[r][c] = l[r][c];
         } // end col 2nd pass
     } // end row 2nd pass
 
@@ -104,7 +102,7 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
 
     for (r = 1; r < img->n_rows-1; r++) {
         for (c = 1; c < img->n_cols-1; c++) {
-            setCounts[label[r][c]]++;
+            setCounts[l[r][c]]++;
         } // end col 2nd pass
     } // end row 2nd pass
 
