@@ -5,7 +5,6 @@
 #include <stdbool.h>
 
 void printECE576AHW5Help();
-
 /* hw5 error codes for debugging the program */
 enum _ECE576A_error
 {
