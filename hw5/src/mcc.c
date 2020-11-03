@@ -46,7 +46,7 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
         }
     }
 
-    int n[4], NW, N, NE, W; // neighbors
+    int n[8], NW, N, NE, W, E, SW, S, SE; // neighbors
     int nextLabel = 1;
     for (r=1;r<img->n_rows-1;r++) { // raster scanning
         for (c=1;c<img->n_cols-1;c++) {
@@ -61,15 +61,17 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
         for (r = 1; r < img->n_rows-1;r++)
             for (c = 1; c < img->n_cols - 1; c++)
                 if (label[r][c] != 0) {
+                    NW = label[r-1][c-1];   N  = label[r-1][ c ];   NE = label[r-1][c+1];
+                    W  = label[ r ][c-1];                         E  = label[ r ][c+1];
+                    SW = label[r+1][c-1];   S  = label[r+1][ c ];   SE = label[r+1][c+1];
 
-                    // get 4 neighbor pixels (8-connectivity)
-                    n[0] = (NW > 0) ? NW : 0;
-                    n[1] = (N > 0) ? N : 0;
-                    n[2] = (NE > 0) ? NE : 0;
-                    n[3] = (W > 0) ? W : 0;
+                    // get 8 neighbor pixels (8-connectivity)
+                    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
+                    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0) ? E : 0;
+                    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
 
                     M = INT_MAX;
-                    for (i = 0; i < 4; i++) {
+                    for (i = 0; i < 8; i++) {
                         if (M > n[i] && n[i] != 0)
                             M = n[i];
                     }
@@ -79,17 +81,20 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
                         change = true;
                     }
                 }
-        for (r = img->n_rows-1; r > 1; r--)
-            for (c = img->n_cols-1; c > 1; c--)
+        for (r = img->n_rows-1; r > 0; r--)
+            for (c = img->n_cols-1; c > 0; c--)
                 if (label[r][c] != 0) {
-                    // get 4 neighbor pixels (8-connectivity)
-                    n[0] = (NW > 0) ? NW : 0;
-                    n[1] = (N > 0) ? N : 0;
-                    n[2] = (NE > 0) ? NE : 0;
-                    n[3] = (W > 0) ? W : 0;
+                    NW = label[r-1][c-1];   N  = label[r-1][ c ];   NE = label[r-1][c+1];
+                    W  = label[ r ][c-1];                         E  = label[ r ][c+1];
+                    SW = label[r+1][c-1];   S  = label[r+1][ c ];   SE = label[r+1][c+1];
+
+                    // get 8 neighbor pixels (8-connectivity)
+                    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
+                    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0) ? E : 0;
+                    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
 
                     M = INT_MAX;
-                    for (i = 0; i < 4; i++) {
+                    for (i = 0; i < 8; i++) {
                         if (M > n[i] && n[i] != 0)
                             M = n[i];
                     }
@@ -102,7 +107,7 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
     } // end do
     while (change == true);
 
-    // have to copy each value of ccM into outccM
+    // have to copy each value of label into outccM
     for (r = 1; r < img->n_rows-1; r++) { // raster scanning
         for (c = 1; c < img->n_cols-1; c++) {
             outccM[r][c] = label[r][c];
@@ -213,7 +218,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     if (verbose) listEquivalencetable(equivalenceTable);
 
     int setVal;
-    // have to copy each value of ccM into outccM
+    // have to copy each value of label into outccM
     for (r = 1; r < img->n_rows-1; r++) { // raster scanning
         for (c = 1; c < img->n_cols-1; c++) {               
             setVal = ccM[r][c];
