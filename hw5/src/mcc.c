@@ -114,18 +114,32 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
         } // end col 2nd pass
     } // end row 2nd pass
 
-    int numSets = 2;
-    *nc = numSets;
+    int *setCounts = (int *)malloc(sizeof(int)*nextLabel);
+    for (i = 0; i < nextLabel;i++) setCounts[i] = 0;
+
+    for (r = 1; r < img->n_rows-1; r++) {
+        for (c = 1; c < img->n_cols-1; c++) {
+            setCounts[label[r][c]]++;
+        } // end col 2nd pass
+    } // end row 2nd pass
+
+    int numSets = 0;
+    for (i = 0; i < nextLabel;i++) {
+        if (setCounts[i] > 0) numSets++;
+        //if (verbose) printf("set %d:%d\n",i, setCounts[i]);
+    }
+    free(setCounts);
+
+    *nc = numSets -1 ; // because background is a component too
     return;
 }
 
-
-
+// this function does not work properly yet, it is super close. But no cigar iterativeCCL works.
 void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM, 
     bool CGL, int *nc, bool verbose)
 
 {
-    int r,c, i, tmp, smallestSetID, uniqueLabel = 1;
+    int r,c, i, smallestSetID, uniqueLabel = 1;
 
     setNode *equivalenceTable = NULL;
 

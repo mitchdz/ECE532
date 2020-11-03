@@ -70,9 +70,11 @@ bool test_ECE576A_HW5_1(bool verbose)
     int nc = runhw5(IMG, CGL, MOV, verbose);
 
     // assert
-    if (nc == 1) return true;
     matfree(IMG.raw_bits);
     matfree(tmpMatrix);
+
+    if (nc == 1) return true;
+    return false;
 }
 
 
@@ -111,7 +113,8 @@ bool test_ECE576A_HW5_2(bool verbose)
     int nc = runhw5(IMG, CGL, MOV, verbose);
 
     // assert
-    if (nc == 1) return true;
     matfree(IMG.raw_bits);
     matfree(tmpMatrix);
+    if (nc == 1) return true;
+    return false;
 }
