@@ -7,9 +7,7 @@
 #include "thresh.h"
 #include <limits.h>
 
-bool checkForeground(int value, bool CGL); //private for this file
-
-bool checkForeground(int value, bool CGL)
+static bool checkForeground(int value, bool CGL)
 {
     bool foreground;
     if (CGL) { //ComponentGrayLevel is 1 meaning black=foreground
@@ -21,7 +19,7 @@ bool checkForeground(int value, bool CGL)
     return foreground;
 }
 
-int getLowestEquivalentLabel(setNode *head, int setID)
+static int getLowestEquivalentLabel(setNode *head, int setID)
 {
     labelNode *ln = getSetNode(head, setID)->labels;
 
@@ -36,36 +34,10 @@ int getLowestEquivalentLabel(setNode *head, int setID)
     return lowestLabel;
 }
 
-//check neighbor value
-bool cnv(int **label, int r, int c)
-{
-    int n[8], NW, N, NE, W, E, SW, S, SE; // neighbors
-    NW = label[r-1][c-1];   N  = label[r-1][ c ];   NE = label[r-1][c+1];
-    W  = label[ r ][c-1];                         E  = label[ r ][c+1];
-    SW = label[r+1][c-1];   S  = label[r+1][ c ];   SE = label[r+1][c+1];
-
-    // get 8 neighbor pixels (8-connectivity)
-    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
-    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0) ? E : 0;
-    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
-
-    int M = INT_MAX;
-    for (int i = 0; i < 8; i++) {
-        if (M > n[i] && n[i] != 0)
-            M = n[i];
-    }
-
-    if (M != label[r][c]) {
-        label[r][c] = M;
-        return true;
-    }
-    else return false;
-}
-
 void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
 {
     int r,c,i,M;
-
+    int n[8], NW, N, NE, W, E, SW, S, SE; // neighbors
     int **l = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
     for(r=0;r<img->n_rows;r++){
         for(c=0;c<img->n_cols;c++){
@@ -86,10 +58,50 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
         change = false;
         for (r =1; r < img->n_rows-1;r++)
             for (c = 1; c < img->n_cols - 1; c++)
-                if (l[r][c] != 0) {change = cnv(l, r, c);}
+                if (l[r][c] != 0) {
+                    NW = l[r-1][c-1];   N  = l[r-1][ c ];   NE = l[r-1][c+1];
+                    W  = l[ r ][c-1];                       E  = l[ r ][c+1];
+                    SW = l[r+1][c-1];   S  = l[r+1][ c ];   SE = l[r+1][c+1];
+
+                    // get 8 neighbor pixels (8-connectivity)
+                    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
+                    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0)  ? E : 0;
+                    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
+
+                    M = INT_MAX;
+                    for (i = 0; i < 8; i++) {
+                        if (M > n[i] && n[i] != 0)
+                            M = n[i];
+                    }
+
+                    if (M != l[r][c]) {
+                        l[r][c] = M;
+                        change = true;
+                    }
+                }
         for (r = img->n_rows-1; r > 0; r--)
             for (c = img->n_cols-1; c > 0; c--)
-                if (l[r][c] != 0) {change = cnv(l, r, c);}
+                if (l[r][c] != 0) {
+                    NW = l[r-1][c-1];   N  = l[r-1][ c ];   NE = l[r-1][c+1];
+                    W  = l[ r ][c-1];                       E  = l[ r ][c+1];
+                    SW = l[r+1][c-1];   S  = l[r+1][ c ];   SE = l[r+1][c+1];
+
+                    // get 8 neighbor pixels (8-connectivity)
+                    n[0] = (NW > 0) ? NW : 0; n[1] = (N > 0) ? N : 0; n[2] = (NE > 0) ? NE : 0;
+                    n[3] = (W > 0 ) ? W  : 0;                         n[4] = (E > 0)  ? E : 0;
+                    n[5] = (SW > 0) ? SW : 0; n[6] = (S > 0) ? S : 0; n[7] = (SE > 0) ? SE : 0;
+
+                    M = INT_MAX;
+                    for (i = 0; i < 8; i++) {
+                        if (M > n[i] && n[i] != 0)
+                            M = n[i];
+                    }
+
+                    if (M != l[r][c]) {
+                        l[r][c] = M;
+                        change = true;
+                    }
+                }
     } // end do
     while (change == true);
 
@@ -157,7 +169,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
             n[2] = ( NE > 0) ? NE : 0;
             n[3] = ( W  > 0) ? W  : 0;
 
-            // if no unique neighbors, label current element and continue
+            // if no unique neighbors, l current element and continue
             if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0) && (n[3] == 0)) {
                 ccM[r][c] = uniqueLabel;
                 pushSetID(&equivalenceTable, uniqueLabel);
@@ -165,7 +177,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
                 continue;
             }
 
-            // else if there are neighbors, find smallest label and assign
+            // else if there are neighbors, find smallest l and assign
             smallestSetID = INT_MAX;
             for (i = 0; i < 4; i++) {
                 if (smallestSetID > n[i] && n[i] != 0)
@@ -182,7 +194,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
         } // end cols
     } // end rows
 
-    // second pass - replace each temp label by the smallest label of 
+    // second pass - replace each temp l by the smallest l of
     //               equivalence class
 
     int *setCounts = (int *)malloc(sizeof(int)*uniqueLabel);
@@ -213,7 +225,7 @@ void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM,
     if (verbose) listEquivalencetable(equivalenceTable);
 
     int setVal;
-    // have to copy each value of label into outccM
+    // have to copy each value of l into outccM
     for (r = 1; r < img->n_rows-1; r++) { // raster scanning
         for (c = 1; c < img->n_cols-1; c++) {               
             setVal = ccM[r][c];
