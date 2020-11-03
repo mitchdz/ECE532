@@ -95,8 +95,7 @@ error_ECE576A_t ECE576A_HW5(
     // read the input PNG
     readPNGandClose((char *)inputImageFileName, &IMG);
 
-    uint8_t histogram[256];
-    convert2DPseudoArrayToHistogram(IMG.raw_bits, IMG.n_rows, IMG.n_cols, histogram);
+
 
     // find all 8-connected foreground components
     uint8_t **componentMatrix = matalloc(IMG.n_rows, IMG.n_cols, 0, 0, sizeof(uint8_t));
@@ -106,6 +105,13 @@ error_ECE576A_t ECE576A_HW5(
     printf("Number of Connected Components: %d\n", nc);
     // overlay components
     OverlayComponentsOntoImage(&IMG, componentMatrix, nc, CGL, MOV);
+
+    uint8_t histogram[256];
+    convert2DPseudoArrayToHistogram(IMG.raw_bits, IMG.n_rows, IMG.n_cols, histogram);
+
+    for (int i =0; i < 255; i++) {
+        printf("p:%d\t%d\n",i,histogram[i]);
+    }
 
     // write output
     writePNG(IMG.raw_bits, (char *)outputImageFileName, IMG.n_rows, IMG.n_cols);

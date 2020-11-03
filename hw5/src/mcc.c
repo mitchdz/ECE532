@@ -36,6 +36,7 @@ int getLowestEquivalentLabel(setNode *head, int setID)
     return lowestLabel;
 }
 
+//check neighbor value
 bool cnv(int **label, int r, int c)
 {
     int n[8], NW, N, NE, W, E, SW, S, SE; // neighbors
@@ -61,7 +62,68 @@ bool cnv(int **label, int r, int c)
 
 }
 
-void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose){int r,c,i,M;int **l = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));for(r=0;r<img->n_rows;r++){for(c=0;c<img->n_cols;c++){l[r][c] = 0;}}int nextLabel = 1;for (r=1;r<img->n_rows-1;r++) { /*raster scanning*/for (c=1;c<img->n_cols-1;c++) {/*only worry about foreground pixels*/checkForeground(img->raw_bits[r][c], CGL) ? (l[r][c] = nextLabel++) : (l[r][c] = 0);}}bool change=false;do{change = false;for (r =1; r < img->n_rows-1;r++) for (c = 1; c < img->n_cols - 1; c++) if (l[r][c] != 0) change = cnv(l, r, c);for (r = img->n_rows-1; r > 0; r--) for (c = img->n_cols-1; c > 0; c--) if (l[r][c] != 0) change = cnv(l, r, c);}/*end do*/while (change == true);/* have to copy each value of l into outccM*/for (r = 1; r < img->n_rows-1; r++) {for (c = 1; c < img->n_cols-1; c++) {outccM[r][c] = l[r][c];} }int *setCounts = (int *)malloc(sizeof(int)*nextLabel);for (i = 0; i < nextLabel;i++) setCounts[i] = 0;for (r = 1; r < img->n_rows-1; r++) {for (c = 1; c < img->n_cols-1; c++) {setCounts[l[r][c]]++;}}int numSets = 0;for (i = 0; i < nextLabel;i++) {if (setCounts[i] > 0) numSets++;}free(setCounts);*nc = numSets -1 ;return;}
+void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
+{
+    int r,c,i,M;
+
+    int **l = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
+    for(r=0;r<img->n_rows;r++){
+        for(c=0;c<img->n_cols;c++){
+            l[r][c] = 0;
+        }
+    }
+
+    int nextLabel = 1;
+    for (r=1;r<img->n_rows-1;r++) { // raster scanning
+        for (c=1;c<img->n_cols-1;c++) {
+            // only worry about foreground pixels
+            checkForeground(img->raw_bits[r][c], CGL) ? (l[r][c] = nextLabel++) : (l[r][c] = 0);
+        }
+    }
+    bool change=false;
+    do
+    {
+        change = false;
+        for (r =1; r < img->n_rows-1;r++)
+            for (c = 1; c < img->n_cols - 1; c++)
+                if (l[r][c] != 0) {change = cnv(l, r, c);}
+        for (r = img->n_rows-1; r > 0; r--)
+            for (c = img->n_cols-1; c > 0; c--)
+                if (l[r][c] != 0) {change = cnv(l, r, c);}
+    } // end do
+    while (change == true);
+
+    // have to copy each value of l into outccM
+    for (r = 1; r < img->n_rows-1; r++) { // raster scanning
+        for (c = 1; c < img->n_cols-1; c++) {
+            outccM[r][c] = l[r][c];
+        } // end col 2nd pass
+    } // end row 2nd pass
+
+    int *setCounts = (int *)malloc(sizeof(int)*nextLabel);
+    for (i = 0; i < nextLabel;i++) setCounts[i] = 0;
+
+    for (r = 1; r < img->n_rows-1; r++) {
+        for (c = 1; c < img->n_cols-1; c++) {
+            setCounts[l[r][c]]++;
+        } // end col 2nd pass
+    } // end row 2nd pass
+
+    int numSets = 0;
+    for (i = 0; i < nextLabel;i++) {
+        if (setCounts[i] > 0) numSets++;
+        //if (verbose) printf("set %d:%d\n",i, setCounts[i]);
+    }
+    free(setCounts);
+
+    *nc = numSets -1 ; // because background is a component too
+    return;
+}
+
+
+
+
+
 
 // this function does not work properly yet, it is super close. But no cigar iterativeCCL works.
 void findMaximal8ConnectedForegroundComponents(IMAGE *img, uint8_t **outccM, 
@@ -195,58 +257,5 @@ void OverlayComponentsOntoImage(IMAGE *img, uint8_t **ccM, int nc, bool CGL,
 
         } // end col 2nd pass
     } // end row 2nd pass
-    return;
-}
-void iterativeCCL1(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
-{
-    int r,c,i,M;
-
-    int **l = matalloc(img->n_rows, img->n_cols, 0, 0, sizeof(int));
-    for(r=0;r<img->n_rows;r++){
-        for(c=0;c<img->n_cols;c++){
-            l[r][c] = 0;
-        }
-    }
-
-    int nextLabel = 1;
-    for (r=1;r<img->n_rows-1;r++) { // raster scanning
-        for (c=1;c<img->n_cols-1;c++) {
-            // only worry about foreground pixels
-            checkForeground(img->raw_bits[r][c], CGL) ? (l[r][c] = nextLabel++) : (l[r][c] = 0);
-        }
-    }
-    bool change=false;
-    do
-    {
-        change = false;
-        for (r =1; r < img->n_rows-1;r++) for (c = 1; c < img->n_cols - 1; c++) if (l[r][c] != 0) change = cnv(l, r, c);
-        for (r = img->n_rows-1; r > 0; r--) for (c = img->n_cols-1; c > 0; c--) if (l[r][c] != 0) change = cnv(l, r, c);
-    } // end do
-    while (change == true);
-
-    // have to copy each value of l into outccM
-    for (r = 1; r < img->n_rows-1; r++) { // raster scanning
-        for (c = 1; c < img->n_cols-1; c++) {
-            outccM[r][c] = l[r][c];
-        } // end col 2nd pass
-    } // end row 2nd pass
-
-    int *setCounts = (int *)malloc(sizeof(int)*nextLabel);
-    for (i = 0; i < nextLabel;i++) setCounts[i] = 0;
-
-    for (r = 1; r < img->n_rows-1; r++) {
-        for (c = 1; c < img->n_cols-1; c++) {
-            setCounts[l[r][c]]++;
-        } // end col 2nd pass
-    } // end row 2nd pass
-
-    int numSets = 0;
-    for (i = 0; i < nextLabel;i++) {
-        if (setCounts[i] > 0) numSets++;
-        //if (verbose) printf("set %d:%d\n",i, setCounts[i]);
-    }
-    free(setCounts);
-
-    *nc = numSets -1 ; // because background is a component too
     return;
 }
