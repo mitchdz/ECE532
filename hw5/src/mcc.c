@@ -59,7 +59,6 @@ bool cnv(int **label, int r, int c)
         label[r][c] = M;
         return true;
     }
-
 }
 
 void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
@@ -93,18 +92,13 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
     } // end do
     while (change == true);
 
+    // copy each value of l into ccM, and count number of components
+    int *setCounts = (int *)malloc(sizeof(int)*nextLabel);
+    for (i = 0; i < nextLabel;i++) setCounts[i] = 0;
     // have to copy each value of l into outccM
     for (r = 1; r < img->n_rows-1; r++) { // raster scanning
         for (c = 1; c < img->n_cols-1; c++) {
             outccM[r][c] = l[r][c];
-        } // end col 2nd pass
-    } // end row 2nd pass
-
-    int *setCounts = (int *)malloc(sizeof(int)*nextLabel);
-    for (i = 0; i < nextLabel;i++) setCounts[i] = 0;
-
-    for (r = 1; r < img->n_rows-1; r++) {
-        for (c = 1; c < img->n_cols-1; c++) {
             setCounts[l[r][c]]++;
         } // end col 2nd pass
     } // end row 2nd pass
@@ -116,13 +110,8 @@ void iterativeCCL(IMAGE *img, uint8_t **outccM, bool CGL, int *nc, bool verbose)
     }
     free(setCounts);
 
-    *nc = numSets -1 ; // because background is a component too
-    return;
+    *nc = numSets -1 ;
 }
-
-
-
-
 
 
 // this function does not work properly yet, it is super close. But no cigar iterativeCCL works.
@@ -250,8 +239,8 @@ void OverlayComponentsOntoImage(IMAGE *img, uint8_t **ccM, int nc, bool CGL,
             if (!checkForeground(img->raw_bits[r][c], CGL)) continue;
  
             k = ccM[r][c];
-            if (CGL) { outputPixelValue = round(k*maxOutputValue/nc);    }
-            else     { outputPixelValue = round((k-1)*maxOutputValue/nc);}
+            if (CGL) { outputPixelValue = round(1.0*k*maxOutputValue/nc);    }
+            else     { outputPixelValue = round(1.0*(k-1)*maxOutputValue/nc);}
 
             img->raw_bits[r][c] = outputPixelValue;
 
